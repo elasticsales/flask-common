@@ -6,7 +6,7 @@ import pytz
 
 from flask import Flask
 from flask.ext.mongoengine import MongoEngine, ValidationError
-from flask_common.utils import apply_recursively
+from flask_common.utils import apply_recursively, isortedset
 from flask_common.fields import PhoneField, TimezoneField, TrimmedStringField, EncryptedStringField, SafeReferenceListField, rng
 from flask_common.formfields import BetterDateTimeField
 
@@ -228,6 +228,25 @@ class ApplyRecursivelyTestCase(unittest.TestCase):
             apply_recursively([{'a': 1, 'b': [2,3], 'c': { 'd': 4, 'e': None }}, 5], lambda n: n+1),
             [{'a': 2, 'b': [3,4], 'c': { 'd': 5, 'e': None }}, 6]
         )
+
+
+class TestISortedSet(unittest.TestCase):
+    def test_isortedset(self):
+        s = isortedset(['Z', 'b', 'A'])
+        self.assertEqual(list(s), ['A', 'b', 'Z'])
+        self.assertTrue('a' in s)
+        self.assertTrue('A' in s)
+        self.assertTrue('b' in s)
+        self.assertTrue('B' in s)
+        self.assertTrue('z' in s)
+        self.assertTrue('Z' in s)
+        self.assertTrue('c' not in s)
+        self.assertTrue('C' not in s)
+
+        s = isortedset(['A', 'a'])
+        self.assertEqual(list(s), ['A'])
+        self.assertTrue('a' in s)
+        self.assertTrue('A' in s)
 
 
 if __name__ == '__main__':

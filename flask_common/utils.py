@@ -1,12 +1,25 @@
 import re
 import csv
-import base64
 import codecs
 import datetime
 import cStringIO
 import unidecode
+from blist import sortedset
 from logging.handlers import SMTPHandler
 
+class isortedset(sortedset):
+    def __init__(self, *args, **kwargs):
+        if not kwargs.get('key'):
+            kwargs['key'] = lambda s: s.lower()
+        super(isortedset, self).__init__(*args, **kwargs)
+
+    def __contains__(self, key):
+        if not self:
+            return False
+        try:
+            return self[self.bisect_left(key)].lower() == key.lower()
+        except IndexError:
+            return False
 
 class DetailedSMTPHandler(SMTPHandler):
     def __init__(self, app_name, *args, **kwargs):

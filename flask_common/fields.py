@@ -1,8 +1,8 @@
 import re
 import pytz
 from mongoengine.fields import ReferenceField, StringField, BinaryField, ListField
-from phonenumbers import PhoneNumber
 from phonenumbers.phonenumberutil import format_number, parse, PhoneNumberFormat, NumberParseException
+from flask.ext.common.utils import isortedset
 from bson import Binary
 from bson.dbref import DBRef
 from Crypto.Cipher import AES
@@ -78,10 +78,6 @@ class SortedSetField(ListField):
         else:
             return list(self.set_class(value))
 
-
-class isortedset(sortedset):
-    def __contains__(self, key):
-        return super(isortedset, self).__contains__(key.lower())
 
 class ISortedSetField(SortedSetField):
     set_class = isortedset
