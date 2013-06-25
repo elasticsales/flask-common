@@ -3,12 +3,10 @@ import pytz
 from mongoengine.fields import ReferenceField, StringField, BinaryField, ListField, EmailField
 from phonenumbers.phonenumberutil import format_number, parse, PhoneNumberFormat, NumberParseException
 from flask.ext.common.utils import isortedset
+from flask.ext.common.crypto import aes_encrypt, aes_decrypt, AuthenticationError
 from bson import Binary
 from bson.dbref import DBRef
-from Crypto.Cipher import AES
-from Crypto import Random
 from blist import sortedset
-import Padding
 
 
 class TrimmedStringField(StringField):
@@ -21,39 +19,28 @@ class TrimmedStringField(StringField):
         if self.required and not value:
             self.error('Value cannot be blank.')
 
-    def __set__(self, instance, value):
-        value = self.to_python(value)
-        return super(TrimmedStringField, self).__set__(instance, value)
-
-    def to_python(self, value):
-        if value:
-            value = value.strip()
-        return value
+    def from_python(self, value):
+        return value and value.strip()
 
     def to_mongo(self, value):
-        return self.to_python(value)
+        return self.from_python(value)
 
 
 class LowerStringField(StringField):
-    def __set__(self, instance, value):
-        value = self.to_python(value)
-        return super(LowerStringField, self).__set__(instance, value)
+    def from_python(self, value):
+        return value and value.lower()
 
     def to_python(self, value):
-        if value:
-            value = value.lower()
-        return value
+        return value and value.lower()
 
     def prepare_query_value(self, op, value):
-        value = value.lower() if value else value
-        return super(LowerStringField, self).prepare_query_value(op, value)
+        return super(LowerStringField, self).prepare_query_value(op, value and value.lower())
 
 
 class LowerEmailField(LowerStringField):
-
     def validate(self, value):
         if not EmailField.EMAIL_REGEX.match(value):
-            self.error('Invalid Mail-address: %s' % value)
+            self.error('Invalid email address: %s' % value)
         super(LowerEmailField, self).validate(value)
 
 
@@ -95,11 +82,11 @@ class SortedSetField(ListField):
         super(SortedSetField, self).__init__(field, **kwargs)
 
     def to_mongo(self, value):
-        value = super(SortedSetField, self).to_mongo(value)
+        value = super(SortedSetField, self).to_mongo(value) or []
         if self._key is not None:
-            return list(self.set_class(value, key=self._key))
+            return list(self.set_class(value, key=self._key)) or None
         else:
-            return list(self.set_class(value))
+            return list(self.set_class(value)) or None
 
 
 class ISortedSetField(SortedSetField):
@@ -131,10 +118,6 @@ class PhoneField(StringField):
 
         return parsed
 
-    def __set__(self, instance, value):
-        value = self.to_python(value)
-        return super(PhoneField, self).__set__(instance, value)
-
     def validate(self, value):
         if not self.required and not value:
             return None
@@ -144,10 +127,7 @@ class PhoneField(StringField):
             except NumberParseException:
                 self.error('Phone is not valid')
 
-    def to_python(self, value):
-        return self.to_raw_phone(value)
-
-    def to_mongo(self, value):
+    def from_python(self, value):
         return self.to_raw_phone(value)
 
     def to_formatted_phone(self, value):
@@ -174,8 +154,6 @@ class PhoneField(StringField):
         return self.to_raw_phone(value)
 
 
-rng = Random.new().read
-
 class EncryptedStringField(BinaryField):
     """
     Encrypted string field. Uses AES256 bit encryption with a different 128 bit
@@ -191,54 +169,23 @@ class EncryptedStringField(BinaryField):
         Key: 32 byte binary string containing the 256 bit AES key
         """
         self.key = key
-        self.to_python_on_init = False
         return super(EncryptedStringField, self).__init__(*args, **kwargs)
 
     def _encrypt(self, data):
-        iv = rng(self.IV_SIZE)
-        ret = Binary(iv + AES.new(self.key, AES.MODE_CBC, iv).encrypt(Padding.appendPadding(data)))
-        return ret
+        return Binary(aes_encrypt(self.key, data))
 
     def _decrypt(self, data):
-        iv, cipher = data[:self.IV_SIZE], data[self.IV_SIZE:]
-        return Padding.removePadding(AES.new(self.key, AES.MODE_CBC, iv).decrypt(cipher))
+        try:
+            return aes_decrypt(self.key, data)
+        except AuthenticationError:
+            # TODO: remove insecure encryption once migrated
+            from Crypto.Cipher import AES
+            import Padding
+            iv, cipher = data[:self.IV_SIZE], data[self.IV_SIZE:]
+            return Padding.removePadding(AES.new(self.key, AES.MODE_CBC, iv).decrypt(cipher))
 
     def to_python(self, value):
         return value and self._decrypt(value) or None
 
     def to_mongo(self, value):
         return value and self._encrypt(value) or None
-
-
-class SafeReferenceListField(ListField):
-    """
-    Like a ListField, but doesn't return non-existing references when
-    dereferencing, i.e. no DBRefs are returned. This means that the next time
-    an object is saved, the non-existing references are removed and application
-    code can rely on having only valid dereferenced objects.
-
-    Must use ReferenceField as its field class.
-    """
-    def __get__(self, instance, owner):
-        result = super(SafeReferenceListField, self).__get__(instance, owner)
-        if instance is None:
-            return result
-        # modify the list in-place
-        result[:] = [obj for obj in result if not isinstance(obj, DBRef)]
-        return result
-
-
-class SafeReferenceField(ReferenceField):
-    """
-    Like a ReferenceField, but doesn't return non-existing references when
-    dereferencing, i.e. no DBRefs are returned. This means that the next time
-    an object is saved, the non-existing references are removed and application
-    code can rely on having only valid dereferenced objects.
-    """
-    def __get__(self, instance, owner):
-        result = super(SafeReferenceField, self).__get__(instance, owner)
-        if isinstance(result, DBRef):
-            instance._data[self.name] = None
-            instance._mark_as_changed(self.name)
-            return None
-        return result

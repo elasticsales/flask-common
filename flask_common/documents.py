@@ -92,6 +92,9 @@ def fetch_related(objs, field_dict, cache_map=None):
     related object twice.
     """
 
+    if not objs:
+        return
+
     if not cache_map:
         # list of objects that we fetched, over all iterations / from previous calls, by document class
         cache_map = {}
@@ -99,12 +102,34 @@ def fetch_related(objs, field_dict, cache_map=None):
     # ids of objects that will be fetched in this iteration, by document class
     id_set_map = {}
 
+    # Helper mapping: field_name -> field, db_field, document_class
+    field_cache = {}
+
+    instance = objs[0]
+    for field_name, sub_field_dict in field_dict.iteritems():
+        field = instance.__class__._fields[field_name]
+        db_field = instance._db_field_map.get(field_name, field_name)
+        if isinstance(field, ReferenceField): # includes SafeReferenceListField
+            document_class = field.document_type
+        elif isinstance(field, SafeReferenceListField):
+            document_class = field.field.document_type
+        else:
+            raise NotImplementedError('%s class not supported for fetch_related' % field.__class__.__name__)
+        field_cache[field_name] = (field, db_field, document_class)
+
     # Determine what IDs we want to fetch
     for field_name, sub_field_dict in field_dict.iteritems():
-        refs = [obj._data[field_name] for obj in objs if isinstance(obj._data[field_name], DBRef)]
-        if refs:
-            document_class = getattr(objs[0].__class__, field_name).document_type
+        field, db_field, document_class = field_cache[field_name]
 
+        if isinstance(field, SafeReferenceField):
+            refs = [obj._db_data.get(db_field, None).id for obj in objs if field_name not in obj._internal_data and obj._db_data.get(db_field, None)]
+        elif isinstance(field, ReferenceField):
+            refs = [getattr(obj, field_name).pk for obj in objs if getattr(getattr(obj, field_name), '_lazy', False)]
+        elif isinstance(field, SafeReferenceListField):
+            refs = [obj._db_data.get(db_field, []) for obj in objs if field_name not in obj._internal_data]
+            refs = [item.id for sublist in refs for item in sublist] # flatten
+
+        if refs:
             if not document_class in cache_map:
                 rel_obj_map = cache_map[document_class] = {}
             else:
@@ -112,9 +137,11 @@ def fetch_related(objs, field_dict, cache_map=None):
 
             if not document_class in id_set_map:
                 id_set = id_set_map[document_class] = set()
+            else:
+                id_set = id_set_map[document_class]
 
             # Never fetch already fetched objects
-            id_set.update(set(ref.id for ref in refs) - set(rel_obj_map.keys()))
+            id_set.update(set(refs) - set(rel_obj_map.keys()))
 
     # Fetch objects
     for document_class, id_set in id_set_map.iteritems():
@@ -127,18 +154,28 @@ def fetch_related(objs, field_dict, cache_map=None):
 
     # Assign objects
     for field_name, sub_field_dict in field_dict.iteritems():
-        if objs:
-            document_class = getattr(objs[0].__class__, field_name).document_type
+        field, db_field, document_class = field_cache[field_name]
 
-            rel_obj_map = cache_map.get(document_class)
-            if rel_obj_map:
-                # Go recursive
-                if isinstance(sub_field_dict, dict):
-                    fetch_related(rel_obj_map.values(), sub_field_dict)
+        rel_obj_map = cache_map.get(document_class)
+        if rel_obj_map:
+            # Go recursive
+            if isinstance(sub_field_dict, dict):
+                fetch_related(rel_obj_map.values(), sub_field_dict)
 
-                for obj in objs:
-                    val = obj._data[field_name]
-                    if val and isinstance(val, DBRef):
+            for obj in objs:
+                if isinstance(field, SafeReferenceField):
+                    if field_name not in obj._internal_data:
+                        val = obj._db_data.get(db_field, None)
+                        if val:
+                            setattr(obj, field_name, rel_obj_map.get(val.id))
+
+                elif isinstance(field, ReferenceField):
+                    val = getattr(obj, field_name)
+                    if val and getattr(val, '_lazy', False):
                         rel_obj = rel_obj_map.get(val.id)
                         if rel_obj:
-                            obj._data[field_name] = rel_obj
+                            setattr(obj, field_name, rel_obj)
+
+                elif isinstance(field, SafeReferenceListField):
+                    if field_name not in obj._internal_data:
+                        setattr(obj, field_name, filter(None, [rel_obj_map.get(val.id) for val in obj._db_data.get(db_field, [])]))

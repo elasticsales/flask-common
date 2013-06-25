@@ -8,12 +8,13 @@ import random
 
 from flask import Flask
 from flask.ext.mongoengine import MongoEngine, ValidationError
+from flask_common.crypto import aes_generate_key
 from flask_common.utils import apply_recursively, isortedset
-from flask_common.fields import PhoneField, TimezoneField, TrimmedStringField, EncryptedStringField, SafeReferenceListField, LowerStringField, LowerEmailField, rng
+from flask_common.fields import PhoneField, TimezoneField, TrimmedStringField, EncryptedStringField, LowerStringField, LowerEmailField
 from flask_common.formfields import BetterDateTimeField
 from flask_common.documents import RandomPKDocument, DocumentBase
 
-from mongoengine import ReferenceField
+from mongoengine import ReferenceField, SafeReferenceListField
 
 from werkzeug.datastructures import MultiDict
 from wtforms import Form
@@ -41,7 +42,7 @@ class TestTrimmedFields(db.Document):
     comment = TrimmedStringField()
 
 class Secret(db.Document):
-    password = EncryptedStringField(rng(32))
+    password = EncryptedStringField(aes_generate_key())
 
 class Book(db.Document):
     pass
