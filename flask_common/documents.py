@@ -70,6 +70,19 @@ class DocumentBase(Document):
             self.date_updated = now
         return super(DocumentBase, self).save(*args, **kwargs)
 
+    @classmethod
+    def ensure_indexes(cls, *args, **kwargs):
+        """
+        Overridden version of ensure_indexes - makes sure we don't create
+        foreground indexes unless we explicitly call this method with a
+        `force=True` kwargs. Same effect could be achieved by adding
+        `'auto_create_index': False` to all the documents' meta dicts, but
+        it's just cumbersome and easy to forget.
+        """
+        if kwargs.pop('force', False):
+            return super(DocumentBase, cls).ensure_indexes(*args, **kwargs)
+        return
+
     meta = {
         'abstract': True,
     }
