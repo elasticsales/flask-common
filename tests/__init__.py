@@ -9,7 +9,7 @@ import unittest
 from dateutil.tz import tzutc
 from flask import Flask
 from mongoengine import connection, Document
-from mongoengine.fields import ReferenceField, SafeReferenceListField, StringField
+from mongoengine.fields import ReferenceField, SafeReferenceListField, StringField, IntField
 from werkzeug.datastructures import MultiDict
 from wtforms import Form
 
@@ -83,6 +83,44 @@ class DocTestCase(unittest.TestCase):
             ref = ReferenceField(A)
 
         self.assertRaises(ValidationError, B.objects.create, ref={'dict': True})
+
+    def test_ensure_indexes(self):
+        """Make sure only explicitly calling Doc.ensure_indexes(force=True) creates indexes."""
+
+        class Doc(DocumentBase, RandomPKDocument):
+            text = TrimmedStringField()
+
+            meta = {
+                'indexes': ['text'],
+                'allow_inheritance': True
+            }
+
+        class InheritedDoc(Doc):
+            number = IntField()
+
+            meta = {
+                'indexes': [
+                    { 'fields': ['number'], 'cls': False },
+                ]
+            }
+
+        Doc.drop_collection()
+
+        Doc.objects.create(text='aaa')
+        InheritedDoc.objects.create(text='aaa', number=1)
+
+        self.assertEqual(Doc.objects.filter(text='aaa').count(), 2)
+        self.assertEqual(Doc._get_collection().index_information().keys(), ['_id_'])
+
+        Doc.ensure_indexes()
+        InheritedDoc.ensure_indexes()
+        self.assertEqual(Doc._get_collection().index_information().keys(), ['_id_'])
+
+        Doc.ensure_indexes(force=True)
+        self.assertEqual(Doc._get_collection().index_information().keys(), ['_id_', '_cls_1_text_1'])
+
+        InheritedDoc.ensure_indexes(force=True)
+        self.assertEqual(Doc._get_collection().index_information().keys(), ['_id_', '_cls_1_text_1', 'number_1'])
 
 
 class SoftDeleteTestCase(unittest.TestCase):
