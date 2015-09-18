@@ -7,3 +7,4 @@ phonenumbers
 pycrypto
 padding
 Unidecode
+sortedcontainers
