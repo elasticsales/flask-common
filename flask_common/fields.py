@@ -2,7 +2,7 @@ import re
 import pytz
 import phonenumbers
 from bson import Binary
-from blist import sortedset
+from sortedcontainers import SortedSet
 from mongoengine.fields import StringField, BinaryField, ListField, EmailField
 
 from flask.ext.common.utils import isortedset
@@ -83,7 +83,7 @@ class SortedSetField(ListField):
     """
 
     _key = None
-    set_class = sortedset
+    set_class = SortedSet
 
     def __init__(self, field, **kwargs):
         if 'key' in kwargs.keys():
