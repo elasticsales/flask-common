@@ -13,6 +13,14 @@ class StringIdField(StringField):
         return super(StringIdField, self).to_mongo(value)
 
 class RandomPKDocument(Document):
+    """Assign a random identifier to the document on save.
+
+    PK is formatted like prefix_a1b2c3
+    """
+    # How much random bytes go into the key.
+    # This is before base62 and prefixing.
+    PK_LENGTH_IN_BYTES = 32
+
     id = StringIdField(primary_key=True)
 
     def __repr__(self):
@@ -20,7 +28,30 @@ class RandomPKDocument(Document):
 
     @classmethod
     def get_pk_prefix(cls):
+        """Prefix for new identifiers. Best to keep it short."""
         return cls._get_collection_name()[:4]
+
+    @classmethod
+    def _generate_random_pk(cls):
+        """Generate a new PK."""
+        return u'%s_%s' % (cls.get_pk_prefix(), zbase62.b2a(os.urandom(cls.PK_LENGTH_IN_BYTES)))
+
+    @property
+    def pregenerated_pk(self):
+        """PK of yet-to-be-saved new object.
+
+        Use for saving object complex graphs with loops.
+        Beware of potential inconsistencies:
+        You'll have a reference to something that doesn't exist in the DB.
+        """
+        # If we already have an ID (object is already saved), return it.
+        if self.id:
+            return self.id
+
+        if not hasattr(self, '_pregenerated_pk'):
+            self._pregenerated_pk = self._generate_random_pk()
+
+        return self._pregenerated_pk
 
     def save(self, *args, **kwargs):
         old_id = self.id
@@ -31,7 +62,7 @@ class RandomPKDocument(Document):
         try:
 
             if not self.id:
-                self.id = u'%s_%s' % (self.get_pk_prefix(), zbase62.b2a(os.urandom(32)))
+                self.id = self.pregenerated_pk
 
                 # Throw an exception if another object with this id already exists.
                 kwargs['force_insert'] = True
