@@ -1,10 +1,12 @@
 import base64
 import json
-from flask import current_app
-from werkzeug.datastructures import Headers
-from werkzeug.test import Client as werkzeug_test_client
 
-class Client(werkzeug_test_client):
+from flask import current_app
+from flask.testing import FlaskClient
+from werkzeug.datastructures import Headers
+
+
+class Client(FlaskClient):
     """
     Test client that supports JSON and uses the application's response class.
     """
