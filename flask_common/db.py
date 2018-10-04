@@ -21,10 +21,12 @@ def MongoReference(field, ref_cls, queryset=None):
 
     def _get(obj):
         if not hasattr(obj, '_%s__cache' % field):
-            setattr(
-                obj, '_%s__cache' % field,
-                queryset.get(pk=getattr(obj, field))
-            )
+            ref_id = getattr(obj, field)
+            if ref_id is None:
+                ref = None
+            else:
+                ref = queryset.get(pk=ref_id)
+            setattr(obj, '_%s__cache' % field, ref)
         return getattr(obj, '_%s__cache' % field)
 
     def _set(obj, val):
