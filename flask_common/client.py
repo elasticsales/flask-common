@@ -10,6 +10,7 @@ class Client(FlaskClient):
     """
     Test client that supports JSON and uses the application's response class.
     """
+
     def __init__(self, app, response_wrapper=None, **kwargs):
         if not response_wrapper:
             response_wrapper = app.response_class
@@ -18,6 +19,7 @@ class Client(FlaskClient):
     def open(self, *args, **kwargs):
         if 'json' in kwargs and 'data' not in kwargs:
             kwargs['data'] = json.dumps(kwargs.pop('json'))
+            kwargs['content_type'] = 'application/json'
 
         resp = super(Client, self).open(*args, **kwargs)
 
