@@ -13,19 +13,24 @@ def MongoReference(field, ref_cls, queryset=None):
 
     The value is cached until an assignment is made.
 
-    To use a custom queryset (instead of the default `ref_cls.objects`),
-    pass it as the `queryset` kwarg.
+    To use a custom QuerySet (instead of the default `ref_cls.objects`),
+    pass it as the `queryset` kwarg. You can also pass a function that
+    resolves to a QuerySet.
     """
-    if queryset is None:
-        queryset = ref_cls.objects
+    def _resolve_queryset():
+        if queryset is None:
+            return ref_cls.objects
+        else:
+            return queryset()
 
     def _get(obj):
+        qs = _resolve_queryset()
         if not hasattr(obj, '_%s__cache' % field):
             ref_id = getattr(obj, field)
             if ref_id is None:
                 ref = None
             else:
-                ref = queryset.get(pk=ref_id)
+                ref = qs.get(pk=ref_id)
             setattr(obj, '_%s__cache' % field, ref)
         return getattr(obj, '_%s__cache' % field)
 
