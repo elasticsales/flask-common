@@ -1,4 +1,6 @@
 import pytz
+from builtins import str
+
 from mongoengine.fields import StringField
 
 
@@ -15,4 +17,4 @@ class TimezoneField(StringField):
         return pytz.timezone(value)
 
     def to_mongo(self, value):
-        return unicode(value)
+        return str(value)

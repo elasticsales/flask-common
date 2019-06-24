@@ -1,6 +1,9 @@
+from builtins import int
+
 from Crypto import Random
 from Crypto.Cipher import AES
 from Crypto.Util import Counter
+import codecs
 import hashlib
 import hmac
 
@@ -59,7 +62,7 @@ def aes_decrypt(key, data, extract_version=True):
 def aes_encrypt_iv(key, data, iv):
     aes_key = key[:AES_BLOCK_SIZE]
     hmac_key = key[AES_BLOCK_SIZE:]
-    initial_value = long(iv.encode("hex"), 16) if iv else 1
+    initial_value = int(codecs.encode(iv, "hex"), 16) if iv else 1
     ctr = Counter.new(128, initial_value=initial_value)
     cipher = AES.new(aes_key, AES.MODE_CTR, counter=ctr).encrypt(data)
     sig = hmac.new(hmac_key, iv + cipher, HMAC_DIGEST).digest()
@@ -82,7 +85,7 @@ def aes_decrypt_iv(key, data, iv, extracted_version=None):
                 key, extracted_version + iv + data, extract_version=False
             )
         raise AuthenticationError('message authentication failed')
-    initial_value = long(iv.encode("hex"), 16) if iv else 1
+    initial_value = int(codecs.encode(iv, "hex"), 16) if iv else 1
     ctr = Counter.new(128, initial_value=initial_value)
     plain = AES.new(aes_key, AES.MODE_CTR, counter=ctr).decrypt(cipher)
     return plain

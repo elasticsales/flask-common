@@ -1,5 +1,7 @@
 from __future__ import print_function
 
+from builtins import str
+
 import calendar
 import codecs
 import csv
@@ -113,7 +115,7 @@ def unicode_csv_reader(unicode_csv_data, dialect=csv.excel, **kwargs):
     )
     for row in csv_reader:
         # decode UTF-8 back to Unicode, cell by cell:
-        yield [unicode(cell, 'utf-8') for cell in row]
+        yield [str(cell, 'utf-8') for cell in row]
 
 
 def utf_8_encoder(unicode_csv_data):
@@ -166,7 +168,10 @@ class CsvWriter:
 
     def writerow(self, row):
         self.writer.writerow(
-            [s.encode("utf-8") if isinstance(s, basestring) else s for s in row]
+            [
+                s.encode("utf-8") if isinstance(s, (str, bytes)) else s
+                for s in row
+            ]
         )
         # Fetch UTF-8 output from the queue ...
         data = self.queue.getvalue()
@@ -298,7 +303,7 @@ def _gen_tz_info_dict():
 14 LINT'''
 
     tzd = {}
-    for tz_descr in map(str.split, tz_str.split('\n')):
+    for tz_descr in (s.split() for s in tz_str.split('\n')):
         tz_offset = int(float(tz_descr[0]) * 3600)
         for tz_code in tz_descr[1:]:
             assert tz_code not in tzd, "duplicate TZ alias detected"
@@ -368,7 +373,7 @@ def force_unicode(s):
 def slugify(text, separator='_'):
     import unidecode
 
-    if isinstance(text, unicode):
+    if isinstance(text, str):
         text = unidecode.unidecode(text)
     text = text.lower().strip()
     return re.sub(r'\W+', separator, text).strip(separator)
@@ -381,7 +386,7 @@ def apply_recursively(obj, f):
     if isinstance(obj, (list, tuple)):
         return [apply_recursively(item, f) for item in obj]
     elif isinstance(obj, dict):
-        return {k: apply_recursively(v, f) for k, v in obj.iteritems()}
+        return {k: apply_recursively(v, f) for k, v in obj.items()}
     elif obj is None:
         return None
     else:

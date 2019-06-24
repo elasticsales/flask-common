@@ -1,3 +1,4 @@
+from future.utils import PY2
 from mongoengine import ListField, ReferenceField, SafeReferenceField
 
 from flask_common.utils import grouper
@@ -15,8 +16,13 @@ def iter_no_cache(query_set):
     if query_set._batch_size is None:
         query_set = query_set.batch_size(1000)
 
+    next = query_set.next if PY2 else query_set.__next__
+
     while True:
-        yield query_set.next()
+        try:
+            yield next()
+        except StopIteration:
+            return
 
 
 def fetch_related(
@@ -118,7 +124,7 @@ def fetch_related(
 
     # Populate the field_info
     instances = get_instance_for_each_type(objs)
-    for field_name, sub_field_dict in field_dict.iteritems():
+    for field_name, sub_field_dict in field_dict.items():
 
         instance = [
             instance
@@ -155,7 +161,7 @@ def fetch_related(
         )
 
     # Determine what IDs we want to fetch
-    for field_name, sub_field_dict in field_dict.iteritems():
+    for field_name, sub_field_dict in field_dict.items():
         field, db_field, document_class, fields_to_fetch = field_info.get(
             field_name
         ) or (None, None, None, None)
@@ -223,7 +229,7 @@ def fetch_related(
             }
 
     # Fetch objects and cache them
-    for document_class, fetch_opts in fetch_map.iteritems():
+    for document_class, fetch_opts in fetch_map.items():
         cls_filters = extra_filters.get(document_class, {})
 
         # Fetch objects in batches. Also set the batch size so we don't do
@@ -249,7 +255,7 @@ def fetch_related(
                 partial_cache_map[document_class].update(update_dict)
 
     # Assign objects
-    for field_name, sub_field_dict in field_dict.iteritems():
+    for field_name, sub_field_dict in field_dict.items():
         field, db_field, document_class, fields_to_fetch = field_info.get(
             field_name
         ) or (None, None, None, None)
