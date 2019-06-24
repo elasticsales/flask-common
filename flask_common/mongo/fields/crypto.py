@@ -1,5 +1,6 @@
 from bson import Binary
 from mongoengine.fields import BinaryField
+from mongoengine.python_support import bin_type, txt_type, PY3
 
 from flask_common.crypto import (
     KEY_LENGTH,
@@ -33,6 +34,12 @@ class EncryptedStringField(BinaryField):
         for key in self.key_list:
             assert len(key) == KEY_LENGTH, 'invalid key size'
         return super(EncryptedStringField, self).__init__(*args, **kwargs)
+
+    def __set__(self, instance, value):
+        # Handle unicode strings by encoding them
+        if isinstance(value, txt_type):
+            value = value.encode('utf-8')
+        return super(BinaryField, self).__set__(instance, value)
 
     def _encrypt(self, data):
         return Binary(aes_encrypt(self.key_list[0], data))

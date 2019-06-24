@@ -8,6 +8,7 @@ workflows:
       - test-3.4
       - test-3.5
       - test-3.6
+      - test-3.7
       - black
 
 defaults: &defaults
@@ -18,7 +19,7 @@ defaults: &defaults
       name: Install dependencies
       command: |
         GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" \
-          sudo -E pip install -r requirements.txt pytest
+          sudo -E pip install -r requirements.txt pytest==4.6.5
   - run:
       name: Test
       command: PYTHONPATH=. pytest tests
@@ -33,14 +34,22 @@ jobs:
     <<: *defaults
     docker:
     - image: circleci/python:3.4
+    - image: mongo:3.2.19
   test-3.5:
     <<: *defaults
     docker:
     - image: circleci/python:3.5
+    - image: mongo:3.2.19
   test-3.6:
     <<: *defaults
     docker:
     - image: circleci/python:3.6
+    - image: mongo:3.2.19
+  test-3.7:
+    <<: *defaults
+    docker:
+    - image: circleci/python:3.7
+    - image: mongo:3.2.19
   black:
     docker:
     - image: circleci/python:3.6
