@@ -184,7 +184,6 @@ def fetch_related(objs, field_dict, cache_map=None, extra_filters={},
     be in the same organization, you can pass:
     {Contact: {'organization_id': organization.pk}}
     """
-
     if not objs:
         return
 
@@ -387,14 +386,14 @@ class ForbiddenQueriesQuerySet(QuerySet):
 
     `forbidden_queries` should be a list of dicts in the form of:
     {
-        # shape of a query, e.g. { _cls: { $in: 1 } }
-        'query_shape': { ... },
+        # shape of a query, e.g. `{"_cls": {"$in": 1}}`
+        'query_shape': {...},
 
         # optional, forbids *all* orderings by default
-        'orderings': [ { key: direction, ... }, None, etc. ]
+        'orderings': [{key: direction, ...}, None, etc.]
 
         # optional, defaults to 0. Even if the query matches the shape and
-        # the ordering, we allow queries with limit < max_allowed_limit
+        # the ordering, we allow queries with limit < `max_allowed_limit`.
         'max_allowed_limit': int or None
     }
 
@@ -456,9 +455,10 @@ class ForbiddenQueriesQuerySet(QuerySet):
     def _get_query_shape(self, query):
         """
         Convert a query into a query shape, e.g.:
-        * { _cls: 'whatever' } into { _cls: 1 }
-        * { date: { $gte: '2015-01-01', $lte: '2015-01-31' } into { date: { $gte: 1, $lte: 1 } }
-        * { _cls: { $in: [ 'a', 'b', 'c' ] } } into { _cls: { $in: [] } }
+        * `{"_cls": "whatever"}` into `{"_cls": 1}`
+        * `{"date": {"$gte": '2015-01-01', "$lte": "2015-01-31"}` into
+          `{"date": {"$gte": 1, "$lte": 1}}`
+        * `{"_cls": {"$in": ["a", "b", "c"]}}` into `{"_cls": {"$in": []}}`
         """
         if not query:
             return query
