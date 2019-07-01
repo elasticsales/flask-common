@@ -3,10 +3,9 @@
 import unittest
 
 from flask import Flask
-from mongoengine.fields import ReferenceField, SafeReferenceListField
+from mongoengine import Document, ReferenceField, SafeReferenceListField
 
 from flask_mongoengine import MongoEngine
-from flask_common.declenum import DeclEnum
 from flask_common.utils import apply_recursively, slugify, uniqify
 
 
@@ -23,16 +22,20 @@ app.config.update(
 db = MongoEngine(app)
 
 
-class Book(db.Document):
-    pass
-
-
-class Author(db.Document):
-    books = SafeReferenceListField(ReferenceField(Book))
-
-
 class SafeReferenceListFieldTestCase(unittest.TestCase):
+    # TODO this is a mongoengine field and it should be tested in that package,
+    # not here.
+
     def test_safe_reference_list_field(self):
+        class Book(Document):
+            pass
+
+        class Author(Document):
+            books = SafeReferenceListField(ReferenceField(Book))
+
+        Author.drop_collection()
+        Book.drop_collection()
+
         b1 = Book.objects.create()
         b2 = Book.objects.create()
 
@@ -103,20 +106,6 @@ class UtilsTestCase(unittest.TestCase):
             uniqify([{'a': 1, 'b': 3}, {'a': 2, 'b': 2}, {'a': 1, 'b': 1}], key=lambda i: i['a']),
             [{'a': 1, 'b': 3}, {'a': 2, 'b': 2}]
         )
-
-
-class DeclEnumTestCase(unittest.TestCase):
-    def test_enum(self):
-        class TestEnum(DeclEnum):
-            alpha = 'alpha_value', 'Alpha Description'
-            beta = 'beta_value', 'Beta Description'
-        assert TestEnum.alpha != TestEnum.beta
-        assert TestEnum.alpha.value == 'alpha_value'
-        assert TestEnum.alpha.description == 'Alpha Description'
-        assert TestEnum.from_string('alpha_value') == TestEnum.alpha
-
-        db_type = TestEnum.db_type()
-        self.assertEqual(set(db_type.enum.values()), set(['alpha_value', 'beta_value']))
 
 
 if __name__ == '__main__':
