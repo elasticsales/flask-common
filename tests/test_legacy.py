@@ -88,9 +88,6 @@ class FieldTestCase(unittest.TestCase):
         location = Location.objects.get(id=location.id)
         assert location.timezone == pytz.timezone('America/Los_Angeles')
 
-    def tearDown(self):
-        pass
-
 
 class FormFieldTestCase(unittest.TestCase):
 
