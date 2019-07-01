@@ -3,33 +3,26 @@
 import datetime
 import random
 import string
-import time
 import unittest
 
 from dateutil.tz import tzutc
 from flask import Flask
-from mongoengine import connection, Document
+from mongoengine import connection
 from mongoengine.errors import DoesNotExist
 from mongoengine.fields import (ReferenceField, SafeReferenceField,
                                 SafeReferenceListField, StringField,
                                 IntField)
-import pytz
 from werkzeug.datastructures import MultiDict
 from wtforms import Form
 
-from flask_mongoengine import MongoEngine, ValidationError
+from flask_mongoengine import MongoEngine
 from flask_common.crypto import aes_generate_key
 from flask_common.declenum import DeclEnum
 from flask_common.formfields import BetterDateTimeField
 from flask_common.mongo import (
-    DocumentBase,
     EncryptedStringField,
     LowerEmailField,
     LowerStringField,
-    RandomPKDocument,
-    SoftDeleteDocument,
-    TimezoneField,
-    TrimmedStringField,
     custom_query_counter,
     fetch_related,
     iter_no_cache
@@ -37,22 +30,17 @@ from flask_common.mongo import (
 from flask_common.utils import apply_recursively, slugify, uniqify
 
 
-
 app = Flask(__name__)
 
 app.config.update(
-    DEBUG = True,
-    TESTING = True,
-    MONGODB_HOST = 'localhost',
-    MONGODB_PORT = '27017',
-    MONGODB_DB = 'common_example_app',
+    DEBUG=True,
+    TESTING=True,
+    MONGODB_HOST='localhost',
+    MONGODB_PORT='27017',
+    MONGODB_DB='common_example_app',
 )
 
 db = MongoEngine(app)
-
-
-class Location(db.Document):
-    timezone = TimezoneField()
 
 
 class Secret(db.Document):
@@ -65,12 +53,6 @@ class Book(db.Document):
 
 class Author(db.Document):
     books = SafeReferenceListField(ReferenceField(Book))
-
-
-class FieldTestCase(unittest.TestCase):
-    def setUp(self):
-        self.app = app.test_client()
-        Location.drop_collection()
 
 
 class FormFieldTestCase(unittest.TestCase):
@@ -88,7 +70,10 @@ class FormFieldTestCase(unittest.TestCase):
 
         form = TestForm(MultiDict({'date': '2012-09-06T01:29:14.107000+00:00'}))
         self.assertTrue(form.validate())
-        self.assertEqual(form.data['date'], datetime.datetime(2012, 9, 6, 1, 29, 14, 107000, tzinfo=tzutc()))
+        self.assertEqual(
+            form.data['date'],
+            datetime.datetime(2012, 9, 6, 1, 29, 14, 107000, tzinfo=tzutc())
+        )
 
         form = TestForm(MultiDict({'date': '2012-09-06 01:29:14'}))
         self.assertTrue(form.validate())
@@ -178,26 +163,26 @@ class SafeReferenceListFieldTestCase(unittest.TestCase):
 class ApplyRecursivelyTestCase(unittest.TestCase):
     def test_none(self):
         self.assertEqual(
-            apply_recursively(None, lambda n: n+1),
+            apply_recursively(None, lambda n: n + 1),
             None
         )
 
     def test_list(self):
         self.assertEqual(
-            apply_recursively([1,2,3], lambda n: n+1),
-            [2,3,4]
+            apply_recursively([1, 2, 3], lambda n: n + 1),
+            [2, 3, 4]
         )
 
     def test_nested_tuple(self):
         self.assertEqual(
-            apply_recursively([(1,2),(3,4)], lambda n: n+1),
-            [[2,3],[4,5]]
+            apply_recursively([(1, 2), (3, 4)], lambda n: n + 1),
+            [[2, 3], [4, 5]]
         )
 
     def test_nested_dict(self):
         self.assertEqual(
-            apply_recursively([{'a': 1, 'b': [2,3], 'c': { 'd': 4, 'e': None }}, 5], lambda n: n+1),
-            [{'a': 2, 'b': [3,4], 'c': { 'd': 5, 'e': None }}, 6]
+            apply_recursively([{'a': 1, 'b': [2, 3], 'c': {'d': 4, 'e': None}}, 5], lambda n: n + 1),
+            [{'a': 2, 'b': [3, 4], 'c': {'d': 5, 'e': None}}, 6]
         )
 
 
@@ -460,7 +445,7 @@ class FetchRelatedTestCase(unittest.TestCase):
 
         # C reference shouldn't be cached because it was a partial fetch
         self.assertEqual(cache_map, {
-            self.A: { self.a3.pk: self.a3 },
+            self.A: {self.a3.pk: self.a3},
             self.C: {}
         })
 
@@ -489,18 +474,18 @@ class FetchRelatedTestCase(unittest.TestCase):
         self.assertEqual(objs[0].ref_b.ref, None)
 
         # make sure the queries to MongoDB only fetched the IDs
-        queries = list(q.db.system.profile.find({ 'op': 'query' }, { 'ns': 1, 'execStats': 1 }))
+        queries = list(q.db.system.profile.find({'op': 'query'}, {'ns': 1, 'execStats': 1}))
         self.assertEqual(
-            set([ q['ns'].split('.')[1] for q in queries ]),
-            set([ 'a', 'b' ])
+            {q['ns'].split('.')[1] for q in queries},
+            {'a', 'b'}
         )
         self.assertEqual(
-            set([ q['execStats']['stage'] for q in queries ]),
-            set([ 'PROJECTION' ]),
+            {q['execStats']['stage'] for q in queries},
+            {'PROJECTION'},
         )
         self.assertEqual(
-            set([ tuple(q['execStats']['transformBy'].keys()) for q in queries ]),
-            set([ ('_id',) ]),
+            {tuple(q['execStats']['transformBy'].keys()) for q in queries},
+            {('_id',)},
         )
 
     def test_fetch_field_without_refs(self):
@@ -612,13 +597,14 @@ class UtilsTestCase(unittest.TestCase):
             [1, 2, 3, 'a', None, 'b']
         )
         self.assertEqual(
-            uniqify([ { 'a': 1 }, { 'a': 2 }, { 'a': 1 } ]),
-            [ { 'a': 1 }, { 'a': 2 } ]
+            uniqify([{'a': 1}, {'a': 2}, {'a': 1}]),
+            [{'a': 1}, {'a': 2}]
         )
         self.assertEqual(
-            uniqify([ { 'a': 1, 'b': 3 }, { 'a': 2, 'b': 2 }, { 'a': 1, 'b': 1 } ], key=lambda i: i['a']),
-            [ { 'a': 1, 'b': 3 }, { 'a': 2, 'b': 2 } ]
+            uniqify([{'a': 1, 'b': 3}, {'a': 2, 'b': 2}, {'a': 1, 'b': 1}], key=lambda i: i['a']),
+            [{'a': 1, 'b': 3}, {'a': 2, 'b': 2}]
         )
+
 
 class DeclEnumTestCase(unittest.TestCase):
     def test_enum(self):

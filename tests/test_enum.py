@@ -1,5 +1,6 @@
 from flask_common.enum import Enum
 
+
 class TestEnum(Enum):
     A = 'a'
     B = 'b'
