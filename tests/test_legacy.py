@@ -26,7 +26,6 @@ from flask_common.mongo import (
     EncryptedStringField,
     LowerEmailField,
     LowerStringField,
-    PhoneField,
     RandomPKDocument,
     SoftDeleteDocument,
     TimezoneField,
@@ -50,11 +49,6 @@ app.config.update(
 )
 
 db = MongoEngine(app)
-
-
-class Phone(db.Document):
-    phone = PhoneField()
-    strict_phone = PhoneField(strict=True)
 
 
 class Location(db.Document):
@@ -81,37 +75,8 @@ class Author(db.Document):
 class FieldTestCase(unittest.TestCase):
     def setUp(self):
         self.app = app.test_client()
-        Phone.drop_collection()
         Location.drop_collection()
         TrimmedFields.drop_collection()
-
-    def test_format_number(self):
-        phone = Phone(phone='14151231234')
-        assert phone.phone == '14151231234'
-
-        phone.phone = 'notaphone'
-        assert phone.phone == 'notaphone'
-        self.assertRaises(ValidationError, phone.validate)
-        self.assertRaises(ValidationError, phone.save)
-
-        phone.phone = '+1 (650) 618 - 1234 x 768'
-        assert phone.phone == '+16506181234x768'
-        phone.validate()
-
-        phone.save()
-
-        assert phone.id == Phone.objects.get(phone='+16506181234x768').id
-        assert phone.id == Phone.objects.get(phone='+1 650-618-1234 ext 768').id
-
-    def test_strict_format_number(self):
-        phone = Phone(strict_phone='12223334444')
-        self.assertRaises(ValidationError, phone.validate)
-        self.assertRaises(ValidationError, phone.save)
-
-        phone = Phone(phone='+6594772797')
-        assert phone.phone == '+6594772797'
-
-        phone.save()
 
     def test_timezone_field(self):
         location = Location()
