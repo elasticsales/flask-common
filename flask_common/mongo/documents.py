@@ -6,7 +6,7 @@ from mongoengine import *
 from mongoengine.queryset import OperationError
 from mongoengine.errors import ValidationError
 
-from .utils.lists import grouper
+from flask_common.utils.lists import grouper
 
 
 class StringIdField(StringField):
