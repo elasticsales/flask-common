@@ -1,7 +1,8 @@
 from bson import Binary
 from mongoengine.fields import BinaryField
 
-from ..crypto import aes_encrypt, aes_decrypt, AuthenticationError, KEY_LENGTH
+from flask_common.crypto import (KEY_LENGTH, AuthenticationError, aes_encrypt,
+                                 aes_decrypt)
 
 
 class EncryptedStringField(BinaryField):

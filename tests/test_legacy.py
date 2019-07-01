@@ -20,13 +20,21 @@ from wtforms import Form
 from flask_mongoengine import MongoEngine, ValidationError
 from flask_common.crypto import aes_generate_key
 from flask_common.declenum import DeclEnum
-from flask_common.fields import (PhoneField, TimezoneField, TrimmedStringField,
-                                EncryptedStringField, LowerStringField,
-                                LowerEmailField)
 from flask_common.formfields import BetterDateTimeField
-from flask_common.mongo import (DocumentBase, RandomPKDocument,
-                                SoftDeleteDocument, custom_query_counter,
-                                fetch_related, iter_no_cache)
+from flask_common.mongo import (
+    DocumentBase,
+    EncryptedStringField,
+    LowerEmailField,
+    LowerStringField,
+    PhoneField,
+    RandomPKDocument,
+    SoftDeleteDocument,
+    TimezoneField,
+    TrimmedStringField,
+    custom_query_counter,
+    fetch_related,
+    iter_no_cache
+)
 from flask_common.utils import apply_recursively, slugify, uniqify
 
 
