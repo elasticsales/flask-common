@@ -3,12 +3,10 @@
 import unittest
 
 from flask import Flask
-from mongoengine.fields import (ReferenceField, SafeReferenceListField,
-                                IntField)
+from mongoengine.fields import ReferenceField, SafeReferenceListField
 
 from flask_mongoengine import MongoEngine
 from flask_common.declenum import DeclEnum
-from flask_common.mongo import iter_no_cache
 from flask_common.utils import apply_recursively, slugify, uniqify
 
 
@@ -119,41 +117,6 @@ class DeclEnumTestCase(unittest.TestCase):
 
         db_type = TestEnum.db_type()
         self.assertEqual(set(db_type.enum.values()), set(['alpha_value', 'beta_value']))
-
-
-class IterNoCacheTestCase(unittest.TestCase):
-    def test_no_cache(self):
-        import weakref
-
-        def is_cached(qs):
-            iterator = iter(qs)
-            d = next(iterator)
-            self.assertEqual(d.i, 0)
-            w = weakref.ref(d)
-            d = next(iterator)
-            self.assertEqual(d.i, 1)
-            # - If the weak reference is still valid at this point, then
-            #   iterator or queryset is holding onto the first object
-            # - Hold reference to qs until very end just in case
-            #   Python gets smart enough to destroy it
-            return w() is not None and qs is not None
-
-        class D(db.Document):
-            i = IntField()
-            pass
-
-        D.drop_collection()
-
-        for i in range(10):
-            D(i=i).save()
-
-        self.assertTrue(is_cached(D.objects.all()))
-        self.assertFalse(is_cached(iter_no_cache(D.objects.all())))
-
-        # check for correct exit behavior
-        self.assertEqual({d.i for d in iter_no_cache(D.objects.all())}, set(range(10)))
-        self.assertEqual({d.i for d in iter_no_cache(D.objects.all().batch_size(5))}, set(range(10)))
-        self.assertEqual({d.i for d in iter_no_cache(D.objects.order_by('i').limit(1))}, set(range(1)))
 
 
 if __name__ == '__main__':
