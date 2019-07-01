@@ -11,8 +11,6 @@ from mongoengine.fields import (ReferenceField, SafeReferenceField,
 from flask_mongoengine import MongoEngine
 from flask_common.declenum import DeclEnum
 from flask_common.mongo import (
-    LowerEmailField,
-    LowerStringField,
     custom_query_counter,
     fetch_related,
     iter_no_cache
@@ -90,77 +88,6 @@ class ApplyRecursivelyTestCase(unittest.TestCase):
             apply_recursively([{'a': 1, 'b': [2, 3], 'c': {'d': 4, 'e': None}}, 5], lambda n: n + 1),
             [{'a': 2, 'b': [3, 4], 'c': {'d': 5, 'e': None}}, 6]
         )
-
-
-class LowerFieldTestCase(unittest.TestCase):
-
-    def test_case_insensitive_query(self):
-
-        class Test(db.Document):
-            field = LowerStringField()
-
-        Test.drop_collection()
-
-        Test(field='whatever').save()
-
-        obj1 = Test.objects.get(field='whatever')
-        obj2 = Test.objects.get(field='WHATEVER')
-
-        self.assertEqual(obj1, obj2)
-
-        Test.drop_collection()
-
-    def test_case_insensitive_uniqueness(self):
-
-        class Test(db.Document):
-            field = LowerStringField(unique=True)
-
-        Test.drop_collection()
-        Test.ensure_indexes()
-
-        Test(field='whatever').save()
-        self.assertRaises(db.NotUniqueError, Test(field='WHATEVER').save)
-
-    def test_email_validation(self):
-
-        class Test(db.Document):
-            email = LowerEmailField()
-
-        Test.drop_collection()
-
-        Test(email='valid@email.com').save()
-        self.assertRaises(db.ValidationError, Test(email='invalid email').save)
-
-    def test_case_insensitive_querying(self):
-
-        class Test(db.Document):
-            email = LowerEmailField()
-
-        Test.drop_collection()
-
-        obj = Test(email='valid@email.com')
-        obj.save()
-
-        self.assertEqual(Test.objects.get(email='valid@email.com'), obj)
-        self.assertEqual(Test.objects.get(email='VALID@EMAIL.COM'), obj)
-        self.assertEqual(Test.objects.get(email__in=['VALID@EMAIL.COM']), obj)
-        self.assertEqual(Test.objects.get(email__nin=['different@email.com']), obj)
-        self.assertEqual(Test.objects.filter(email__ne='VALID@EMAIL.COM').count(), 0)
-
-    def test_lower_field_in_embedded_doc(self):
-
-        class EmbeddedDoc(db.EmbeddedDocument):
-            email = LowerEmailField()
-
-        class Test(db.Document):
-            embedded = db.EmbeddedDocumentField(EmbeddedDoc)
-
-        Test.drop_collection()
-
-        obj = Test(embedded=EmbeddedDoc(email='valid@email.com'))
-        obj.save()
-
-        self.assertTrue(obj in Test.objects.filter(embedded__email__in=['VALID@EMAIL.COM', 'whatever']))
 
 
 class SlugifyTestCase(unittest.TestCase):
