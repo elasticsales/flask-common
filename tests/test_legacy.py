@@ -137,8 +137,7 @@ class FieldTestCase(unittest.TestCase):
 
 
 class FormFieldTestCase(unittest.TestCase):
-    def setUp(self):
-        pass
+
     def test_datetime_field(self):
         class TestForm(Form):
             date = BetterDateTimeField()
