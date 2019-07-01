@@ -6,6 +6,7 @@ from flask_common.mongo import PhoneField
 
 
 class PhoneFieldTestCase(unittest.TestCase):
+    # TODO pytest-ify and test the field instance directly without persistence.
 
     def test_format_number(self):
         class Person(Document):

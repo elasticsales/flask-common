@@ -88,23 +88,6 @@ class FieldTestCase(unittest.TestCase):
         location = Location.objects.get(id=location.id)
         assert location.timezone == pytz.timezone('America/Los_Angeles')
 
-    def test_trimmedstring_field(self):
-        test = TrimmedFields(name='')
-        self.assertRaises(ValidationError, test.save)
-
-        test = TrimmedFields(name='  ')
-        self.assertRaises(ValidationError, test.save)
-
-        test = TrimmedFields(name=' 1', comment='')
-        test.save()
-        self.assertEqual(test.name, '1')
-        self.assertEqual(test.comment, '')
-
-        test = TrimmedFields(name=' big name', comment=' this is a comment')
-        test.save()
-        self.assertEqual(test.name, 'big name')
-        self.assertEqual(test.comment, 'this is a comment')
-
     def tearDown(self):
         pass
 
