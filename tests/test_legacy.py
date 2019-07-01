@@ -55,11 +55,6 @@ class Location(db.Document):
     timezone = TimezoneField()
 
 
-class TrimmedFields(db.Document):
-    name = TrimmedStringField(required=True)
-    comment = TrimmedStringField()
-
-
 class Secret(db.Document):
     password = EncryptedStringField(aes_generate_key())
 
@@ -76,7 +71,6 @@ class FieldTestCase(unittest.TestCase):
     def setUp(self):
         self.app = app.test_client()
         Location.drop_collection()
-        TrimmedFields.drop_collection()
 
     def test_timezone_field(self):
         location = Location()
