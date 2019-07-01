@@ -72,16 +72,6 @@ class FieldTestCase(unittest.TestCase):
         self.app = app.test_client()
         Location.drop_collection()
 
-    def test_timezone_field(self):
-        location = Location()
-        location.save()
-        location = Location.objects.get(id=location.id)
-        assert location.timezone == pytz.UTC
-        location.timezone = 'America/Los_Angeles'
-        location.save()
-        location = Location.objects.get(id=location.id)
-        assert location.timezone == pytz.timezone('America/Los_Angeles')
-
 
 class FormFieldTestCase(unittest.TestCase):
 
