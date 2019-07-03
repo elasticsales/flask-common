@@ -53,5 +53,3 @@ class custom_query_counter(query_counter):
             print('-'*80)
         count = queries.count()
         return count
-
-

@@ -43,4 +43,3 @@ class LowerEmailField(StringField):
         if not EmailField.EMAIL_REGEX.match(value):
             self.error('Invalid email address: %s' % value)
         super(LowerEmailField, self).validate(value)
-
