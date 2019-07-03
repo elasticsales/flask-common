@@ -72,7 +72,7 @@ class DictCompare(dict):
     """
     def __eq__(self, other):
         for k, v in self.items():
-            if not k in other or other[k] != v:
+            if k not in other or other[k] != v:
                 return False
         return True
 
