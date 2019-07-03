@@ -90,7 +90,7 @@ def local_request(view, method='GET', data=None, view_args=None, user=None,
     try:
         resp = view.dispatch_request(**view_args)
         json_data = json.loads(resp.data)
-    except Exception as e:
+    except Exception:
         ctx.pop()
         raise
     else:
