@@ -24,9 +24,9 @@ class Enum(object):
         """
         if not cls.__values:
             cls.__values = [
-                getattr(cls,v)
+                getattr(cls, v)
                 for v in dir(cls)
-                if not callable(getattr(cls,v)) and not v.startswith('_')
+                if not callable(getattr(cls, v)) and not v.startswith('_')
             ]
 
         return cls.__values
@@ -39,9 +39,9 @@ class Enum(object):
         """
         if not cls.__choices:
             cls.__choices = [
-                (getattr(cls,v), v)
+                (getattr(cls, v), v)
                 for v in dir(cls)
-                if not callable(getattr(cls,v)) and not v.startswith('_')
+                if not callable(getattr(cls, v)) and not v.startswith('_')
             ]
 
         return cls.__choices

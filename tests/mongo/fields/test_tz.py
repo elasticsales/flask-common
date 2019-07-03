@@ -12,6 +12,7 @@ class TimezoneFieldTestCase(unittest.TestCase):
     def test_timezone_field(self):
         class Location(Document):
             timezone = TimezoneField()
+
         Location.drop_collection()
 
         location = Location()

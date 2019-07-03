@@ -28,6 +28,7 @@ class ForbiddenQueriesQuerySet(QuerySet):
 
     You can mark *any* queryset as safe with `mark_as_safe`.
     """
+
     forbidden_queries = None  # override this in a subclass
 
     _marked_as_safe = False
@@ -45,9 +46,9 @@ class ForbiddenQueriesQuerySet(QuerySet):
 
         query_shape = self._get_query_shape(self._query)
         for forbidden in self.forbidden_queries:
-            if (
-                query_shape == forbidden['query_shape'] and
-                (not forbidden.get('orderings') or self._ordering in forbidden['orderings'])
+            if query_shape == forbidden['query_shape'] and (
+                not forbidden.get('orderings')
+                or self._ordering in forbidden['orderings']
             ):
 
                 # determine the real limit based on objects.limit or objects[idx_key]
@@ -58,11 +59,12 @@ class ForbiddenQueriesQuerySet(QuerySet):
                     else:
                         limit = idx_key
 
-                if limit is None or limit > forbidden.get('max_allowed_limit', 0):
+                if limit is None or limit > forbidden.get(
+                    'max_allowed_limit', 0
+                ):
                     raise ForbiddenQueryException(
-                        'Forbidden query used! Query: %s, Ordering: %s, Limit: %s' % (
-                            self._query, self._ordering, limit
-                        )
+                        'Forbidden query used! Query: %s, Ordering: %s, Limit: %s'
+                        % (self._query, self._ordering, limit)
                     )
 
     def next(self):

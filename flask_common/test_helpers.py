@@ -8,6 +8,7 @@ class SetCompare(object):
 
     SetCompare([1, 2, 3]) == [2, 3, 1]
     """
+
     def __init__(self, members):
         self.members = members
 
@@ -26,6 +27,7 @@ class RegexSetCompare(object):
 
     RegexSetCompare('(.*) OR (.*) OR (.*)', ['1', '2', '3']) == '2 OR 3 OR 1'
     """
+
     def __init__(self, regex, args):
         self.regex = re.compile(regex)
         self.args = args
@@ -49,6 +51,7 @@ class Capture(object):
     capture == 'Hello'  # returns True
     capture()           # returns 'Hello'
     """
+
     def __call__(self):
         return self.obj
 
@@ -70,6 +73,7 @@ class DictCompare(dict):
     DictCompare({'a': 'b'}) == {'a': 'c'}
     DictCompare({'a': 'b'}) == {'b': 'c'}
     """
+
     def __eq__(self, other):
         for k, v in self.items():
             if not k in other or other[k] != v:

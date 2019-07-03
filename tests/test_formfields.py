@@ -26,9 +26,11 @@ class FormFieldTestCase(unittest.TestCase):
         self.assertTrue(form.validate())
         self.assertEqual(
             form.data['date'],
-            datetime.datetime(2012, 9, 6, 1, 29, 14, 107000, tzinfo=tzutc())
+            datetime.datetime(2012, 9, 6, 1, 29, 14, 107000, tzinfo=tzutc()),
         )
 
         form = TestForm(MultiDict({'date': '2012-09-06 01:29:14'}))
         self.assertTrue(form.validate())
-        self.assertEqual(form.data['date'], datetime.datetime(2012, 9, 6, 1, 29, 14))
+        self.assertEqual(
+            form.data['date'], datetime.datetime(2012, 9, 6, 1, 29, 14)
+        )

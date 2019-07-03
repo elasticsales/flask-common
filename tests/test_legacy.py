@@ -61,27 +61,26 @@ class SafeReferenceListFieldTestCase(unittest.TestCase):
 
 class ApplyRecursivelyTestCase(unittest.TestCase):
     def test_none(self):
-        self.assertEqual(
-            apply_recursively(None, lambda n: n + 1),
-            None
-        )
+        self.assertEqual(apply_recursively(None, lambda n: n + 1), None)
 
     def test_list(self):
         self.assertEqual(
-            apply_recursively([1, 2, 3], lambda n: n + 1),
-            [2, 3, 4]
+            apply_recursively([1, 2, 3], lambda n: n + 1), [2, 3, 4]
         )
 
     def test_nested_tuple(self):
         self.assertEqual(
             apply_recursively([(1, 2), (3, 4)], lambda n: n + 1),
-            [[2, 3], [4, 5]]
+            [[2, 3], [4, 5]],
         )
 
     def test_nested_dict(self):
         self.assertEqual(
-            apply_recursively([{'a': 1, 'b': [2, 3], 'c': {'d': 4, 'e': None}}, 5], lambda n: n + 1),
-            [{'a': 2, 'b': [3, 4], 'c': {'d': 5, 'e': None}}, 6]
+            apply_recursively(
+                [{'a': 1, 'b': [2, 3], 'c': {'d': 4, 'e': None}}, 5],
+                lambda n: n + 1,
+            ),
+            [{'a': 2, 'b': [3, 4], 'c': {'d': 5, 'e': None}}, 6],
         )
 
 
@@ -92,19 +91,20 @@ class SlugifyTestCase(unittest.TestCase):
 
 
 class UtilsTestCase(unittest.TestCase):
-
     def test_uniqify(self):
         self.assertEqual(
             uniqify([1, 2, 3, 1, 'a', None, 'a', 'b']),
-            [1, 2, 3, 'a', None, 'b']
+            [1, 2, 3, 'a', None, 'b'],
         )
         self.assertEqual(
-            uniqify([{'a': 1}, {'a': 2}, {'a': 1}]),
-            [{'a': 1}, {'a': 2}]
+            uniqify([{'a': 1}, {'a': 2}, {'a': 1}]), [{'a': 1}, {'a': 2}]
         )
         self.assertEqual(
-            uniqify([{'a': 1, 'b': 3}, {'a': 2, 'b': 2}, {'a': 1, 'b': 1}], key=lambda i: i['a']),
-            [{'a': 1, 'b': 3}, {'a': 2, 'b': 2}]
+            uniqify(
+                [{'a': 1, 'b': 3}, {'a': 2, 'b': 2}, {'a': 1, 'b': 1}],
+                key=lambda i: i['a'],
+            ),
+            [{'a': 1, 'b': 3}, {'a': 2, 'b': 2}],
         )
 
 

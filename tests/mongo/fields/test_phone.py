@@ -11,6 +11,7 @@ class PhoneFieldTestCase(unittest.TestCase):
     def test_format_number(self):
         class Person(Document):
             phone = PhoneField()
+
         Person.drop_collection()
 
         person = Person(phone='14151231234')
@@ -27,11 +28,14 @@ class PhoneFieldTestCase(unittest.TestCase):
         person.save()
 
         assert person.id == Person.objects.get(phone='+16506181234x768').id
-        assert person.id == Person.objects.get(phone='+1 650-618-1234 ext 768').id
+        assert (
+            person.id == Person.objects.get(phone='+1 650-618-1234 ext 768').id
+        )
 
     def test_strict_format_number(self):
         class Person(Document):
             phone = PhoneField(strict=True)
+
         Person.drop_collection()
 
         person = Person(phone='12223334444')

@@ -4,18 +4,21 @@ import unittest
 
 from mongoengine import Document, ReferenceField, StringField, ValidationError
 
-from flask_common.mongo.documents import (DocumentBase, RandomPKDocument,
-                                          SoftDeleteDocument)
+from flask_common.mongo.documents import (
+    DocumentBase,
+    RandomPKDocument,
+    SoftDeleteDocument,
+)
 
 
 class DocumentBaseTestCase(unittest.TestCase):
-
     def test_cls_inheritance(self):
         """
         Make sure _cls is not appended to queries and indexes and that
         allow_inheritance is disabled by default for docs inheriting from
         RandomPKDocument and DocumentBase.
         """
+
         class Doc(DocumentBase, RandomPKDocument):
             text = StringField()
 
@@ -27,6 +30,7 @@ class DocumentBaseTestCase(unittest.TestCase):
         Make sure that you cannot save crap in a ReferenceField that
         references a RandomPKDocument.
         """
+
         class A(RandomPKDocument):
             text = StringField()
 
@@ -40,6 +44,7 @@ class DocumentBaseTestCase(unittest.TestCase):
         Make sure a class inheriting from DocumentBase correctly handles
         updates to date_updated.
         """
+
         class Doc(DocumentBase, RandomPKDocument):
             text = StringField()
 
@@ -78,30 +83,35 @@ class DocumentBaseTestCase(unittest.TestCase):
         time.sleep(0.001)  # make sure some time passes between the updates
         doc.update(
             set__date_created=new_date_created,
-            set__date_updated=new_date_updated
+            set__date_updated=new_date_updated,
         )
         doc.reload()
 
-        self.assertEqual(doc.date_created.replace(tzinfo=None), new_date_created)
-        self.assertEqual(doc.date_updated.replace(tzinfo=None), new_date_updated)
+        self.assertEqual(
+            doc.date_created.replace(tzinfo=None), new_date_created
+        )
+        self.assertEqual(
+            doc.date_updated.replace(tzinfo=None), new_date_updated
+        )
 
         time.sleep(0.001)  # make sure some time passes between the updates
         doc.update(set__text='newest', update_date=False)
         doc.reload()
 
         self.assertEqual(doc.text, 'newest')
-        self.assertEqual(doc.date_created.replace(tzinfo=None), new_date_created)
-        self.assertEqual(doc.date_updated.replace(tzinfo=None), new_date_updated)
+        self.assertEqual(
+            doc.date_created.replace(tzinfo=None), new_date_created
+        )
+        self.assertEqual(
+            doc.date_updated.replace(tzinfo=None), new_date_updated
+        )
 
 
 class SoftDeleteDocumentTestCase(unittest.TestCase):
-
     class Person(DocumentBase, RandomPKDocument, SoftDeleteDocument):
         name = StringField()
 
-        meta = {
-            'allow_inheritance': True,
-        }
+        meta = {'allow_inheritance': True}
 
     class Programmer(Person):
         language = StringField()
@@ -117,6 +127,7 @@ class SoftDeleteDocumentTestCase(unittest.TestCase):
 
         def _bad_update():
             s.update(set__is_deleted=None)
+
         self.assertRaises(ValidationError, _bad_update)
 
     def test_queryset_manager(self):

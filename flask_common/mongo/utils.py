@@ -1,5 +1,8 @@
-from mongoengine import (ReferenceField, SafeReferenceField,
-                         SafeReferenceListField)
+from mongoengine import (
+    ReferenceField,
+    SafeReferenceField,
+    SafeReferenceListField,
+)
 
 from flask_common.utils import grouper
 
@@ -20,8 +23,9 @@ def iter_no_cache(query_set):
         yield query_set.next()
 
 
-def fetch_related(objs, field_dict, cache_map=None, extra_filters={},
-                  batch_size=100):
+def fetch_related(
+    objs, field_dict, cache_map=None, extra_filters={}, batch_size=100
+):
     """
     Recursively fetches related objects for the given document instances.
     Sample usage:
@@ -120,8 +124,11 @@ def fetch_related(objs, field_dict, cache_map=None, extra_filters={},
     instances = get_instance_for_each_type(objs)
     for field_name, sub_field_dict in field_dict.iteritems():
 
-        instance = [instance for instance in instances
-                    if instance and field_name in instance.__class__._fields]
+        instance = [
+            instance
+            for instance in instances
+            if instance and field_name in instance.__class__._fields
+        ]
         if not instance:
             continue  # None of the objects contains this field
 
@@ -133,31 +140,57 @@ def fetch_related(objs, field_dict, cache_map=None, extra_filters={},
         elif isinstance(field, SafeReferenceListField):
             document_class = field.field.document_type
         else:
-            raise NotImplementedError('%s class not supported for fetch_related' % field.__class__.__name__)
-        fields_to_fetch = sub_field_dict if isinstance(sub_field_dict, (list, tuple)) else None
-        field_info[field_name] = (field, db_field, document_class, fields_to_fetch)
+            raise NotImplementedError(
+                '%s class not supported for fetch_related'
+                % field.__class__.__name__
+            )
+        fields_to_fetch = (
+            sub_field_dict
+            if isinstance(sub_field_dict, (list, tuple))
+            else None
+        )
+        field_info[field_name] = (
+            field,
+            db_field,
+            document_class,
+            fields_to_fetch,
+        )
 
     # Determine what IDs we want to fetch
     for field_name, sub_field_dict in field_dict.iteritems():
-        field, db_field, document_class, fields_to_fetch = field_info.get(field_name) or (None, None, None, None)
+        field, db_field, document_class, fields_to_fetch = field_info.get(
+            field_name
+        ) or (None, None, None, None)
         if not field:
             continue
 
         # we need to use _db_data for safe references because touching their
         # pks triggers a query
         if isinstance(field, SafeReferenceField):
-            ids = {id_from_value(field, obj._db_data.get(db_field, None))
-                   for obj in objs if field_name not in obj._internal_data and
-                   obj._db_data.get(db_field, None)}
+            ids = {
+                id_from_value(field, obj._db_data.get(db_field, None))
+                for obj in objs
+                if field_name not in obj._internal_data
+                and obj._db_data.get(db_field, None)
+            }
         elif isinstance(field, SafeReferenceListField):
-            ids = [obj._db_data.get(db_field, []) for obj in objs
-                   if field_name not in obj._internal_data]
-            ids = {id_from_value(field.field, item)
-                   for sublist in ids for item in sublist}  # flatten the list of lists
+            ids = [
+                obj._db_data.get(db_field, [])
+                for obj in objs
+                if field_name not in obj._internal_data
+            ]
+            ids = {
+                id_from_value(field.field, item)
+                for sublist in ids
+                for item in sublist
+            }  # flatten the list of lists
         elif isinstance(field, ReferenceField):
-            ids = {getattr(obj, field_name).pk for obj in objs
-                   if getattr(obj, field_name, None) and
-                   getattr(getattr(obj, field_name), '_lazy', False)}
+            ids = {
+                getattr(obj, field_name).pk
+                for obj in objs
+                if getattr(obj, field_name, None)
+                and getattr(getattr(obj, field_name), '_lazy', False)
+            }
 
         # remove ids of objects that are already in the cache map
         if document_class in cache_map:
@@ -181,11 +214,14 @@ def fetch_related(objs, field_dict, cache_map=None, extra_filters={},
             # has conflicting fields_to_fetch (e.g. { user: ["id"], created_by: True })
             # TODO this could be improved to fetch a union of all requested fields
             if fields_to_fetch != fetch_map[document_class]['fields_to_fetch']:
-                raise RuntimeError('Cannot specify different fields_to_fetch for the same document class %s' % document_class)
+                raise RuntimeError(
+                    'Cannot specify different fields_to_fetch for the same document class %s'
+                    % document_class
+                )
         else:
             fetch_map[document_class] = {
                 'ids': ids,
-                'fields_to_fetch': fields_to_fetch
+                'fields_to_fetch': fields_to_fetch,
             }
 
     # Fetch objects and cache them
@@ -195,8 +231,9 @@ def fetch_related(objs, field_dict, cache_map=None, extra_filters={},
         # Fetch objects in batches. Also set the batch size so we don't do
         # multiple queries per batch.
         for id_group in grouper(batch_size, list(fetch_opts['ids'])):
-            qs = (document_class.objects.filter(pk__in=id_group, **cls_filters)
-                                        .clear_initial_query())
+            qs = document_class.objects.filter(
+                pk__in=id_group, **cls_filters
+            ).clear_initial_query()
 
             # only fetch the requested fields
             if fetch_opts['fields_to_fetch']:
@@ -215,7 +252,9 @@ def fetch_related(objs, field_dict, cache_map=None, extra_filters={},
 
     # Assign objects
     for field_name, sub_field_dict in field_dict.iteritems():
-        field, db_field, document_class, fields_to_fetch = field_info.get(field_name) or (None, None, None, None)
+        field, db_field, document_class, fields_to_fetch = field_info.get(
+            field_name
+        ) or (None, None, None, None)
 
         if not field:
             continue
@@ -226,7 +265,9 @@ def fetch_related(objs, field_dict, cache_map=None, extra_filters={},
 
         # if a dict of subfields was passed, go recursive
         if pk_to_obj and isinstance(sub_field_dict, dict):
-            fetch_related(pk_to_obj.values(), sub_field_dict, cache_map=cache_map)
+            fetch_related(
+                pk_to_obj.values(), sub_field_dict, cache_map=cache_map
+            )
 
         # attach all the values to all the objects
         for obj in objs:
@@ -237,7 +278,7 @@ def fetch_related(objs, field_dict, cache_map=None, extra_filters={},
                         setattr_unchanged(
                             obj,
                             field_name,
-                            pk_to_obj.get(id_from_value(field, val))
+                            pk_to_obj.get(id_from_value(field, val)),
                         )
 
             elif isinstance(field, ReferenceField):
@@ -249,8 +290,11 @@ def fetch_related(objs, field_dict, cache_map=None, extra_filters={},
 
             elif isinstance(field, SafeReferenceListField):
                 if field_name not in obj._internal_data:
-                    value = filter(None, [pk_to_obj.get(id_from_value(field.field, val))
-                                          for val in obj._db_data.get(db_field, [])])
+                    value = filter(
+                        None,
+                        [
+                            pk_to_obj.get(id_from_value(field.field, val))
+                            for val in obj._db_data.get(db_field, [])
+                        ],
+                    )
                     setattr_unchanged(obj, field_name, value)
-
-

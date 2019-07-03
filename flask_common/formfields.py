@@ -1,6 +1,7 @@
 import dateutil.parser
 from wtforms.fields import DateTimeField
 
+
 class BetterDateTimeField(DateTimeField):
     """ Like DateTimeField, but uses dateutil.parser to parse the date """
 
