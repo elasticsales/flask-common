@@ -5,5 +5,4 @@ def test_importing_mongo():
     syntax is parseable by Python 3.
     """
     from flask_common import mongo
-
-
+    assert mongo
