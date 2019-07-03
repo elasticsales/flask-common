@@ -4,8 +4,8 @@ import unittest
 
 from mongoengine import Document, ReferenceField, StringField, ValidationError
 
-from flask_common.mongo import (DocumentBase, RandomPKDocument,
-                                SoftDeleteDocument)
+from flask_common.mongo.documents import (DocumentBase, RandomPKDocument,
+                                          SoftDeleteDocument)
 
 
 class DocumentBaseTestCase(unittest.TestCase):

@@ -3,7 +3,7 @@ import unittest
 import pytz
 from mongoengine import Document
 
-from flask_common.mongo import TimezoneField
+from flask_common.mongo.fields import TimezoneField
 
 
 class TimezoneFieldTestCase(unittest.TestCase):

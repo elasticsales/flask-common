@@ -3,8 +3,8 @@ import unittest
 from mongoengine import (Document, EmbeddedDocument, EmbeddedDocumentField,
                          ValidationError, NotUniqueError)
 
-from flask_common.mongo import (LowerEmailField, LowerStringField,
-                                TrimmedStringField)
+from flask_common.mongo.fields import (LowerEmailField, LowerStringField,
+                                       TrimmedStringField)
 
 
 class TrimmedStringFieldTestCase(unittest.TestCase):

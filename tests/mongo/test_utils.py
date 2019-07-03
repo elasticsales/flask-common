@@ -5,8 +5,8 @@ from mongoengine import (Document, DoesNotExist, IntField, ReferenceField,
                          SafeReferenceField, SafeReferenceListField,
                          StringField)
 
-from flask_common.mongo import (custom_query_counter, fetch_related,
-                                iter_no_cache)
+from flask_common.mongo.query_counters import custom_query_counter
+from flask_common.mongo.utils import fetch_related, iter_no_cache
 
 
 class IterNoCacheTestCase(unittest.TestCase):

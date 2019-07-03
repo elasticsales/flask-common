@@ -1,3 +1,4 @@
+from flask import current_app
 from mongoengine import QuerySet
 
 

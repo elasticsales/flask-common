@@ -2,7 +2,7 @@ import unittest
 
 from mongoengine import Document, ValidationError
 
-from flask_common.mongo import PhoneField
+from flask_common.mongo.fields import PhoneField
 
 
 class PhoneFieldTestCase(unittest.TestCase):

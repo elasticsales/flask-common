@@ -5,7 +5,7 @@ import unittest
 from mongoengine import Document, connection
 
 from flask_common.crypto import aes_generate_key
-from flask_common.mongo import EncryptedStringField
+from flask_common.mongo.fields import EncryptedStringField
 
 
 class EncryptedStringFieldTestCase(unittest.TestCase):
