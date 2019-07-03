@@ -5,6 +5,5 @@ class Application(Flask):
         config = kwargs.pop('config', None)
         super(Application, self).__init__(name, *args, **kwargs)
         self.config.from_object('%s.config' % name)
-        if config != None:
+        if config is not None:
             self.config.update(**config)
-

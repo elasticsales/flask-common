@@ -144,4 +144,3 @@ class DeclEnum(object):
     @classmethod
     def db_type(cls):
         return DeclEnumType(cls)
-
