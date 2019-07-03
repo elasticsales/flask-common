@@ -292,7 +292,7 @@ def parse_date_tz(date):
 
 def mail_admins(subject, body, recipients=None):
     from flask_mail import Message
-    if recipients == None:
+    if recipients is None:
         recipients = current_app.config['ADMINS']
     if not current_app.testing:
         if current_app.debug:
@@ -410,7 +410,7 @@ def apply_recursively(obj, f):
         return [apply_recursively(item, f) for item in obj]
     elif isinstance(obj, dict):
         return {k: apply_recursively(v, f) for k, v in obj.iteritems()}
-    elif obj == None:
+    elif obj is None:
         return None
     else:
         return f(obj)
