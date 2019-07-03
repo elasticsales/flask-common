@@ -1,7 +1,7 @@
 import base64
 import json
 
-from flask import current_app, g
+from flask import current_app
 from flask.testing import FlaskClient
 from werkzeug.datastructures import Headers
 
