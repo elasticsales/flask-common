@@ -23,6 +23,7 @@ encryption. The same key/iv combination must never be reused to encrypt
 different messages.
 """
 
+
 # Returns a new randomly generated AES key
 def aes_generate_key():
     return rng(KEY_LENGTH)
