@@ -3,7 +3,9 @@ from mongoengine.fields import StringField, EmailField
 
 class TrimmedStringField(StringField):
     def __init__(self, *args, **kwargs):
-        kwargs['required'] = kwargs.get('required', False) or kwargs.get('min_length', 0) > 0
+        kwargs['required'] = (
+            kwargs.get('required', False) or kwargs.get('min_length', 0) > 0
+        )
         return super(TrimmedStringField, self).__init__(*args, **kwargs)
 
     def validate(self, value):
@@ -26,7 +28,9 @@ class LowerStringField(StringField):
         return value and value.lower()
 
     def prepare_query_value(self, op, value):
-        return super(LowerStringField, self).prepare_query_value(op, value and value.lower())
+        return super(LowerStringField, self).prepare_query_value(
+            op, value and value.lower()
+        )
 
 
 class LowerEmailField(StringField):
@@ -37,7 +41,9 @@ class LowerEmailField(StringField):
         return self.from_python(value)
 
     def prepare_query_value(self, op, value):
-        return super(LowerEmailField, self).prepare_query_value(op, value and value.lower().strip())
+        return super(LowerEmailField, self).prepare_query_value(
+            op, value and value.lower().strip()
+        )
 
     def validate(self, value):
         if not EmailField.EMAIL_REGEX.match(value):

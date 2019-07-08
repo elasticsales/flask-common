@@ -2,13 +2,13 @@ import uuid
 
 from mongoengine import UUIDField
 
-from ..utils.id import id_to_uuid, uuid_to_id
+from flask_common.utils.id import id_to_uuid, uuid_to_id
 
 
 try:
-    string_types = (basestring,) # Python 2
+    string_types = (basestring,)  # Python 2
 except NameError:
-    string_types = (str,) # Python 3
+    string_types = (str,)  # Python 3
 
 
 class IDField(UUIDField):
@@ -21,6 +21,7 @@ class IDField(UUIDField):
     If autogenerate=True is passed to the constructor, a random ID is generated
     and assigned to the field by default.
     """
+
     def __init__(self, **kwargs):
         self.prefix = kwargs.pop('prefix')
         self.autogenerate = kwargs.pop('autogenerate', False)

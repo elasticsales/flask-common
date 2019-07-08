@@ -4,7 +4,7 @@ from Crypto.Util import Counter
 import hashlib
 import hmac
 
-AES_BLOCK_SIZE = 32 # 256 bit
+AES_BLOCK_SIZE = 32  # 256 bit
 HMAC_KEY_SIZE = 32
 HMAC_DIGEST = hashlib.sha256
 HMAC_DIGEST_SIZE = hashlib.sha256().digest_size
@@ -12,8 +12,10 @@ KEY_LENGTH = AES_BLOCK_SIZE + HMAC_KEY_SIZE
 
 rng = Random.new().read
 
+
 class AuthenticationError(Exception):
     pass
+
 
 """
 Helper AES encryption/decryption methods. Uses AES-CTR + HMAC for authenticated
@@ -25,11 +27,13 @@ different messages.
 def aes_generate_key():
     return rng(KEY_LENGTH)
 
+
 # Encrypt + sign using a random IV
 def aes_encrypt(key, data):
     assert len(key) == KEY_LENGTH, 'invalid key size'
     iv = rng(AES_BLOCK_SIZE)
     return iv + aes_encrypt_iv(key, data, iv)
+
 
 # Verify + decrypt data encrypted with IV
 def aes_decrypt(key, data):
@@ -37,6 +41,7 @@ def aes_decrypt(key, data):
     iv = data[:AES_BLOCK_SIZE]
     data = data[AES_BLOCK_SIZE:]
     return aes_decrypt_iv(key, data, iv)
+
 
 # Encrypt + sign using no IV or provided IV. Pass empty string for no IV.
 # Note: You should normally use aes_encrypt()
@@ -48,6 +53,7 @@ def aes_encrypt_iv(key, data, iv):
     cipher = AES.new(aes_key, AES.MODE_CTR, counter=ctr).encrypt(data)
     sig = hmac.new(hmac_key, iv + cipher, HMAC_DIGEST).digest()
     return cipher + sig
+
 
 # Verify + decrypt using no IV or provided IV. Pass empty string for no IV.
 # Note: You should normally use aes_decrypt()

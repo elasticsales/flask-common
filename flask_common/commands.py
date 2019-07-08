@@ -38,10 +38,13 @@ class Manager(flask_script.Manager):
         if not isinstance(app, Flask):
             if isinstance(app, str):
                 pkg, func_name = app.rsplit('.', 1)
+
                 def create_app(*args, **kwargs):
                     import importlib
+
                     module = importlib.import_module(pkg)
                     return getattr(module, func_name)(*args, **kwargs)
+
                 app = create_app
 
             if callable(app):
@@ -75,6 +78,7 @@ class ContextlessCommand(flask_script.Command):
     """
     A Flask-Script command that doesn't require app context.
     """
+
     def __call__(self, app=None, *args, **kwargs):
         return self.run(*args, **kwargs)
 
@@ -113,21 +117,25 @@ class Test(flask_script.Command):
         # passed we can forward all args.
         if self.app_args or self.app_kwargs:
             if isinstance(app, FlaskProxy):
-                app = self.parent.get_or_create_app(*self.app_args,
-                                                    **self.app_kwargs)
+                app = self.parent.get_or_create_app(
+                    *self.app_args, **self.app_kwargs
+                )
             else:
-                raise Exception('Must use flask_common.commands.Manager when '
-                                'passing args to the Test() command.')
+                raise Exception(
+                    'Must use flask_common.commands.Manager when '
+                    'passing args to the Test() command.'
+                )
 
         return super(Test, self).__call__(app, *args, **kwargs)
 
     def create_parser(self, *args, **kwargs):
         # Override the default parser so we can pass all arguments to pytest.
         import argparse
-        func_stack = kwargs.pop('func_stack',())
+
+        func_stack = kwargs.pop('func_stack', ())
         parent = kwargs.pop('parent', None)
         parser = argparse.ArgumentParser(*args, add_help=False, **kwargs)
-        parser.set_defaults(func_stack=func_stack+(self,))
+        parser.set_defaults(func_stack=func_stack + (self,))
         self.parser = parser
         self.parent = parent
         return parser
@@ -136,4 +144,5 @@ class Test(flask_script.Command):
         # Keep imports inlined so they're not unnecessarily imported.
         import pytest
         import sys
+
         sys.exit(pytest.main(args))

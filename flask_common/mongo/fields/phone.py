@@ -1,7 +1,7 @@
 import re
 
-from mongoengine.fields import StringField
 import phonenumbers
+from mongoengine.fields import StringField
 
 
 class PhoneField(StringField):
@@ -20,7 +20,7 @@ class PhoneField(StringField):
         # valid numbers don't start with the same digit(s) as their country code so we strip them
         country_code = phonenumbers.country_code_for_region(region)
         if country_code and value.startswith(str(country_code)):
-            value = value[len(str(country_code)):]
+            value = value[len(str(country_code)) :]
 
         parsed = phonenumbers.parse(value, region)
 
@@ -43,8 +43,12 @@ class PhoneField(StringField):
         try:
             number = PhoneField._parse(value)
 
-            if self._strict_validation and not phonenumbers.is_valid_number(number):
-                raise phonenumbers.NumberParseException(phonenumbers.NumberParseException.NOT_A_NUMBER, error_msg)
+            if self._strict_validation and not phonenumbers.is_valid_number(
+                number
+            ):
+                raise phonenumbers.NumberParseException(
+                    phonenumbers.NumberParseException.NOT_A_NUMBER, error_msg
+                )
 
         except phonenumbers.NumberParseException:
             self.error(error_msg)
@@ -62,10 +66,14 @@ class PhoneField(StringField):
         return value
 
     def to_formatted_phone(self, value):
-        return self._get_formatted_phone(value, phonenumbers.PhoneNumberFormat.INTERNATIONAL)
+        return self._get_formatted_phone(
+            value, phonenumbers.PhoneNumberFormat.INTERNATIONAL
+        )
 
     def to_local_formatted_phone(self, value):
-        return self._get_formatted_phone(value, phonenumbers.PhoneNumberFormat.NATIONAL)
+        return self._get_formatted_phone(
+            value, phonenumbers.PhoneNumberFormat.NATIONAL
+        )
 
     @classmethod
     def to_raw_phone(self, value, region=None):
@@ -73,7 +81,9 @@ class PhoneField(StringField):
             try:
                 number = value
                 phone = PhoneField._parse(number, region)
-                number = phonenumbers.format_number(phone, phonenumbers.PhoneNumberFormat.E164)
+                number = phonenumbers.format_number(
+                    phone, phonenumbers.PhoneNumberFormat.E164
+                )
                 if phone.extension:
                     number += 'x%s' % phone.extension
                 return number
@@ -82,4 +92,6 @@ class PhoneField(StringField):
         return value
 
     def prepare_query_value(self, op, value):
-        return super(PhoneField, self).prepare_query_value(op, PhoneField.to_raw_phone(value))
+        return super(PhoneField, self).prepare_query_value(
+            op, PhoneField.to_raw_phone(value)
+        )

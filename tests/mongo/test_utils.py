@@ -1,9 +1,15 @@
 import unittest
 import weakref
 
-from mongoengine import (Document, DoesNotExist, IntField, ReferenceField,
-                         SafeReferenceField, SafeReferenceListField,
-                         StringField)
+from mongoengine import (
+    Document,
+    DoesNotExist,
+    IntField,
+    ReferenceField,
+    SafeReferenceField,
+    SafeReferenceListField,
+    StringField,
+)
 
 from flask_common.mongo.query_counters import custom_query_counter
 from flask_common.mongo.utils import fetch_related, iter_no_cache
@@ -11,7 +17,6 @@ from flask_common.mongo.utils import fetch_related, iter_no_cache
 
 class IterNoCacheTestCase(unittest.TestCase):
     def test_no_cache(self):
-
         def is_cached(qs):
             iterator = iter(qs)
             d = next(iterator)
@@ -38,13 +43,20 @@ class IterNoCacheTestCase(unittest.TestCase):
         self.assertFalse(is_cached(iter_no_cache(D.objects.all())))
 
         # check for correct exit behavior
-        self.assertEqual({d.i for d in iter_no_cache(D.objects.all())}, set(range(10)))
-        self.assertEqual({d.i for d in iter_no_cache(D.objects.all().batch_size(5))}, set(range(10)))
-        self.assertEqual({d.i for d in iter_no_cache(D.objects.order_by('i').limit(1))}, set(range(1)))
+        self.assertEqual(
+            {d.i for d in iter_no_cache(D.objects.all())}, set(range(10))
+        )
+        self.assertEqual(
+            {d.i for d in iter_no_cache(D.objects.all().batch_size(5))},
+            set(range(10)),
+        )
+        self.assertEqual(
+            {d.i for d in iter_no_cache(D.objects.order_by('i').limit(1))},
+            set(range(1)),
+        )
 
 
 class FetchRelatedTestCase(unittest.TestCase):
-
     def setUp(self):
         super(FetchRelatedTestCase, self).setUp()
 
@@ -100,23 +112,19 @@ class FetchRelatedTestCase(unittest.TestCase):
         self.b2 = B.objects.create(shard_b=self.shard, ref=self.a2)
         self.c1 = C.objects.create(shard_c=self.shard, ref_a=self.a3)
         self.d1 = D.objects.create(
-            shard_d=self.shard,
-            ref_c=self.c1,
-            ref_a=self.a3
+            shard_d=self.shard, ref_c=self.c1, ref_a=self.a3
         )
         self.e1 = E.objects.create(
             shard_e=self.shard,
             refs_a=[self.a1, self.a2, self.a3],
-            ref_b=self.b1
+            ref_b=self.b1,
         )
         self.f1 = F.objects.create(shard_f=self.shard, ref_a=None)  # empty ref
 
     def test_fetch_related(self):
         with custom_query_counter() as q:
             objs = list(self.B.objects.all())
-            fetch_related(objs, {
-                'ref': True
-            })
+            fetch_related(objs, {'ref': True})
 
             # make sure A objs are fetched
             for obj in objs:
@@ -128,10 +136,7 @@ class FetchRelatedTestCase(unittest.TestCase):
     def test_fetch_related_multiple_objs(self):
         with custom_query_counter() as q:
             objs = list(self.B.objects.all()) + list(self.C.objects.all())
-            fetch_related(objs, {
-                'ref': True,
-                'ref_a': True
-            })
+            fetch_related(objs, {'ref': True, 'ref_a': True})
 
             # make sure A objs are fetched
             for obj in objs:
@@ -150,12 +155,7 @@ class FetchRelatedTestCase(unittest.TestCase):
         """
         with custom_query_counter() as q:
             objs = list(self.D.objects.all())
-            fetch_related(objs, {
-                'ref_a': True,
-                'ref_c': {
-                    'ref_a': True
-                }
-            })
+            fetch_related(objs, {'ref_a': True, 'ref_c': {'ref_a': True}})
 
             # make sure A objs are fetched
             for obj in objs:
@@ -174,12 +174,10 @@ class FetchRelatedTestCase(unittest.TestCase):
         self.c1.delete()
 
         objs = list(self.D.objects.all())
-        fetch_related(objs, {
-            'ref_c': {
-                'ref_a': True
-            }
-        })
-        self.assertTrue(objs[0].ref_c.pk)  # pk still exists even though the reference is broken
+        fetch_related(objs, {'ref_c': {'ref_a': True}})
+        self.assertTrue(
+            objs[0].ref_c.pk
+        )  # pk still exists even though the reference is broken
         self.assertRaises(DoesNotExist, lambda: objs[0].ref_c.ref_a)
 
     def test_partial_fetch_related(self):
@@ -187,9 +185,7 @@ class FetchRelatedTestCase(unittest.TestCase):
         Make sure we can only fetch particular fields of a reference.
         """
         objs = list(self.B.objects.all())
-        fetch_related(objs, {
-            'ref': ["id"]
-        })
+        fetch_related(objs, {'ref': ["id"]})
         self.assertEqual(objs[0].ref.pk, self.a1.pk)
 
         # "txt" field of the referenced object shouldn't be fetched
@@ -203,10 +199,9 @@ class FetchRelatedTestCase(unittest.TestCase):
         Make sure that contraint is respected.
         """
         objs = list(self.B.objects.all()) + list(self.C.objects.all())
-        self.assertRaises(RuntimeError, fetch_related, objs, {
-            'ref': ["id"],
-            'ref_a': True
-        })
+        self.assertRaises(
+            RuntimeError, fetch_related, objs, {'ref': ["id"], 'ref_a': True}
+        )
 
     def test_partial_fetch_cache_map(self):
         """
@@ -216,18 +211,14 @@ class FetchRelatedTestCase(unittest.TestCase):
         """
         cache_map = {}
         objs = list(self.D.objects.all())
-        fetch_related(objs, {
-            'ref_a': True,
-            'ref_c': ["id"]
-        }, cache_map=cache_map)
+        fetch_related(
+            objs, {'ref_a': True, 'ref_c': ["id"]}, cache_map=cache_map
+        )
         self.assertEqual(objs[0].ref_c.pk, self.c1.pk)
         self.assertEqual(objs[0].ref_a.pk, self.a3.pk)
 
         # C reference shouldn't be cached because it was a partial fetch
-        self.assertEqual(cache_map, {
-            self.A: {self.a3.pk: self.a3},
-            self.C: {}
-        })
+        self.assertEqual(cache_map, {self.A: {self.a3.pk: self.a3}, self.C: {}})
 
     def test_safe_reference_fields(self):
         """
@@ -237,15 +228,11 @@ class FetchRelatedTestCase(unittest.TestCase):
         objs = list(self.E.objects.all())
 
         with custom_query_counter() as q:
-            fetch_related(objs, {
-                'refs_a': ["id"],
-                'ref_b': ["id"]
-            })
+            fetch_related(objs, {'refs_a': ["id"], 'ref_b': ["id"]})
 
         # make sure the IDs match
         self.assertEqual(
-            [a.pk for a in objs[0].refs_a],
-            [self.a1.pk, self.a2.pk, self.a3.pk]
+            [a.pk for a in objs[0].refs_a], [self.a1.pk, self.a2.pk, self.a3.pk]
         )
         self.assertEqual(objs[0].ref_b.pk, self.b1.pk)
 
@@ -254,14 +241,12 @@ class FetchRelatedTestCase(unittest.TestCase):
         self.assertEqual(objs[0].ref_b.ref, None)
 
         # make sure the queries to MongoDB only fetched the IDs
-        queries = list(q.db.system.profile.find({'op': 'query'}, {'ns': 1, 'execStats': 1}))
-        self.assertEqual(
-            {q['ns'].split('.')[1] for q in queries},
-            {'a', 'b'}
+        queries = list(
+            q.db.system.profile.find({'op': 'query'}, {'ns': 1, 'execStats': 1})
         )
+        self.assertEqual({q['ns'].split('.')[1] for q in queries}, {'a', 'b'})
         self.assertEqual(
-            {q['execStats']['stage'] for q in queries},
-            {'PROJECTION'},
+            {q['execStats']['stage'] for q in queries}, {'PROJECTION'}
         )
         self.assertEqual(
             {tuple(q['execStats']['transformBy'].keys()) for q in queries},
@@ -275,16 +260,12 @@ class FetchRelatedTestCase(unittest.TestCase):
         """
         # full fetch
         objs = list(self.F.objects.all())
-        fetch_related(objs, {
-            'ref_a': True
-        })
+        fetch_related(objs, {'ref_a': True})
         self.assertEqual(objs[0].ref_a, None)
 
         # partial fetch
         objs = list(self.F.objects.all())
-        fetch_related(objs, {
-            'ref_a': ["id"],
-        })
+        fetch_related(objs, {'ref_a': ["id"]})
         self.assertEqual(objs[0].ref_a, None)
 
     def test_fetch_same_doc_class_multiple_times_with_cache_map(self):
@@ -298,18 +279,16 @@ class FetchRelatedTestCase(unittest.TestCase):
         cache_map = {}
         objs = [self.b1, self.c1]
         with custom_query_counter() as q:
-            fetch_related(objs, {
-                'ref': True
-            }, cache_map=cache_map)
-            fetch_related(objs, {
-                'ref_a': ['id']
-            }, cache_map=cache_map)
+            fetch_related(objs, {'ref': True}, cache_map=cache_map)
+            fetch_related(objs, {'ref_a': ['id']}, cache_map=cache_map)
 
             self.assertEqual(q, 2)
             self.assertEqual(
-                [op['query']['filter']['_id']['$in'][0]
-                    for op in q.db.system.profile.find({'op': 'query'})],
-                [self.a1.pk, self.a3.pk]
+                [
+                    op['query']['filter']['_id']['$in'][0]
+                    for op in q.db.system.profile.find({'op': 'query'})
+                ],
+                [self.a1.pk, self.a3.pk],
             )
 
     def test_extra_filters(self):
@@ -319,13 +298,14 @@ class FetchRelatedTestCase(unittest.TestCase):
         objs = list(self.E.objects.all())
 
         with custom_query_counter() as q:
-            fetch_related(objs, {
-                'refs_a': True,
-                'ref_b': True,
-            }, extra_filters={
-                self.A: {'shard_a': self.shard},
-                self.B: {'shard_b': self.shard},
-            })
+            fetch_related(
+                objs,
+                {'refs_a': True, 'ref_b': True},
+                extra_filters={
+                    self.A: {'shard_a': self.shard},
+                    self.B: {'shard_b': self.shard},
+                },
+            )
         ops = list(q.db.system.profile.find({'op': 'query'}))
         assert len(ops) == 2
         filters = {op['query']['find']: op['query']['filter'] for op in ops}
@@ -339,9 +319,7 @@ class FetchRelatedTestCase(unittest.TestCase):
         objs = list(self.B.objects.all())
 
         with custom_query_counter() as q:
-            fetch_related(objs, {
-                'ref': True,
-            }, batch_size=2)
+            fetch_related(objs, {'ref': True}, batch_size=2)
 
             # make sure A objs are fetched
             for obj in objs:
@@ -357,9 +335,7 @@ class FetchRelatedTestCase(unittest.TestCase):
         objs = list(self.B.objects.all())
 
         with custom_query_counter() as q:
-            fetch_related(objs, {
-                'ref': True,
-            }, batch_size=3)
+            fetch_related(objs, {'ref': True}, batch_size=3)
 
             # make sure A objs are fetched
             for obj in objs:

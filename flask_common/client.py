@@ -30,17 +30,26 @@ class Client(FlaskClient):
 
         return resp
 
+
 class ApiClient(Client):
     """
     API test client that supports JSON and uses the given API key.
     """
+
     def __init__(self, app, api_key=None):
         self.api_key = api_key
         return super(ApiClient, self).__init__(app, use_cookies=False)
 
     def get_headers(self, api_key):
         api_key = api_key or self.api_key
-        return Headers([('Authorization','Basic %s' % (base64.b64encode('%s:' % api_key)))])
+        return Headers(
+            [
+                (
+                    'Authorization',
+                    'Basic %s' % (base64.b64encode('%s:' % api_key)),
+                )
+            ]
+        )
 
     def open(self, *args, **kwargs):
         # include api_key auth header in all api calls
@@ -49,8 +58,16 @@ class ApiClient(Client):
             kwargs['headers'] = self.get_headers(api_key)
         return super(ApiClient, self).open(*args, **kwargs)
 
-def local_request(view, method='GET', data=None, view_args=None, user=None,
-                  api_key=None, meta=None):
+
+def local_request(
+    view,
+    method='GET',
+    data=None,
+    view_args=None,
+    user=None,
+    api_key=None,
+    meta=None,
+):
     """
     Performs a request to the current application's view without the network
     overhead and without request pre and postprocessing. Returns a tuple
@@ -69,13 +86,17 @@ def local_request(view, method='GET', data=None, view_args=None, user=None,
                   view_args={ 'pk': 'oppo_abcd' }, api_key='abc')
     """
     if api_key is not None and user is not None:
-        raise TypeError("local_request can only take an api_key or a user, not both.")
+        raise TypeError(
+            "local_request can only take an api_key or a user, not both."
+        )
 
     if not view_args:
         view_args = {}
 
     ctx = current_app.test_request_context()
-    ctx.request.environ['REQUEST_METHOD'] = method  # we can't directly manipulate request.method (it's immutable)
+    ctx.request.environ[
+        'REQUEST_METHOD'
+    ] = method  # we can't directly manipulate request.method (it's immutable)
     ctx.user = user
     if api_key is not None:
         ctx.g.api_key = api_key

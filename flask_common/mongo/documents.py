@@ -2,15 +2,28 @@ import os
 import datetime
 
 from zbase62 import zbase62
-from mongoengine import (BooleanField, DateTimeField, Document, OperationError,
-                         Q, QuerySet, StringField, ValidationError,
-                         queryset_manager)
+from mongoengine import (
+    BooleanField,
+    DateTimeField,
+    Document,
+    OperationError,
+    QuerySet,
+    StringField,
+    ValidationError,
+    queryset_manager,
+)
+
+from .querysets import NotDeletedQuerySet
 
 
 class StringIdField(StringField):
     def to_mongo(self, value):
         if not isinstance(value, basestring):
-            raise ValidationError(errors={self.name: ['StringIdField only accepts string values.']})
+            raise ValidationError(
+                errors={
+                    self.name: ['StringIdField only accepts string values.']
+                }
+            )
         return super(StringIdField, self).to_mongo(value)
 
 
@@ -33,7 +46,10 @@ class RandomPKDocument(Document):
         try:
 
             if not self.id:
-                self.id = u'%s_%s' % (self.get_pk_prefix(), zbase62.b2a(os.urandom(32)))
+                self.id = u'%s_%s' % (
+                    self.get_pk_prefix(),
+                    zbase62.b2a(os.urandom(32)),
+                )
 
                 # Throw an exception if another object with this id already exists.
                 kwargs['force_insert'] = True
@@ -48,23 +64,22 @@ class RandomPKDocument(Document):
             # Use "startswith" instead of "in". Otherwise, if a free form
             # StringField had a unique constraint someone could inject that
             # string into the error message.
-            if unicode(err).startswith(u'Tried to save duplicate unique keys (E11000 duplicate key error index: %s.%s.$_id_ ' % (self._get_db().name, self._get_collection_name())):
+            if unicode(err).startswith(
+                u'Tried to save duplicate unique keys (E11000 duplicate key error index: %s.%s.$_id_ '
+                % (self._get_db().name, self._get_collection_name())
+            ):
                 return self.save(*args, **kwargs)
             else:
                 raise
 
-    meta = {
-        'abstract': True,
-    }
+    meta = {'abstract': True}
 
 
 class DocumentBase(Document):
     date_created = DateTimeField(required=True)
     date_updated = DateTimeField(required=True)
 
-    meta = {
-        'abstract': True,
-    }
+    meta = {'abstract': True}
 
     def _type(self):
         return unicode(self.__class__.__name__)
@@ -92,20 +107,6 @@ class DocumentBase(Document):
         super(DocumentBase, self).update(*args, **kwargs)
 
 
-class NotDeletedQuerySet(QuerySet):
-    def __call__(self, q_obj=None, class_check=True, slave_okay=False, read_preference=None, **query):
-        # we don't use __ne=True here, because $ne isn't a selective query and doesn't utilize an index in the most efficient manner (http://docs.mongodb.org/manual/faq/indexes/#using-ne-and-nin-in-a-query-is-slow-why)
-        extra_q_obj = Q(is_deleted=False)
-        q_obj = q_obj & extra_q_obj if q_obj else extra_q_obj
-        return super(NotDeletedQuerySet, self).__call__(q_obj, class_check, slave_okay, read_preference, **query)
-
-    def count(self, *args, **kwargs):
-        # we need this hack for doc.objects.count() to exclude deleted objects
-        if not getattr(self, '_not_deleted_query_applied', False):
-            self = self.all()
-        return super(NotDeletedQuerySet, self).count(*args, **kwargs)
-
-
 class SoftDeleteDocument(Document):
     is_deleted = BooleanField(default=False, required=True)
 
@@ -128,10 +129,9 @@ class SoftDeleteDocument(Document):
     @queryset_manager
     def all_objects(doc_cls, queryset):
         if not hasattr(doc_cls, '_all_objs_queryset'):
-            doc_cls._all_objs_queryset = QuerySet(doc_cls, doc_cls._get_collection())
+            doc_cls._all_objs_queryset = QuerySet(
+                doc_cls, doc_cls._get_collection()
+            )
         return doc_cls._all_objs_queryset
 
-    meta = {
-        'abstract': True,
-        'queryset_class': NotDeletedQuerySet,
-    }
+    meta = {'abstract': True, 'queryset_class': NotDeletedQuerySet}

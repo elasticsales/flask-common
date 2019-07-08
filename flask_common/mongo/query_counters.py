@@ -22,22 +22,35 @@ class custom_query_counter(query_counter):
         ]
 
     def _get_queries(self):
-        filter_query = { "$or": [
-            { "ns": {"$nin": self.get_ignored_collections()}, "op": { "$ne": "killcursors" } },
-            { "ns": "{0}.$cmd".format(self.db.name), "command.findAndModify": { "$exists": True } },
-        ]}
+        filter_query = {
+            "$or": [
+                {
+                    "ns": {"$nin": self.get_ignored_collections()},
+                    "op": {"$ne": "killcursors"},
+                },
+                {
+                    "ns": "{0}.$cmd".format(self.db.name),
+                    "command.findAndModify": {"$exists": True},
+                },
+            ]
+        }
         return self.db.system.profile.find(filter_query)
 
     def _get_count(self):
         """ Get the number of queries. """
         queries = self._get_queries()
         if self.verbose:
-            print('-'*80)
+            print('-' * 80)
             for query in queries:
                 # findAndModify appear in $cmd -- we'll make them more readable
                 if query['ns'].endswith('.$cmd'):
                     if 'findAndModify' in query['command']:
-                        ns = '.'.join([query['ns'].split('.')[0], query['command']['findAndModify']])
+                        ns = '.'.join(
+                            [
+                                query['ns'].split('.')[0],
+                                query['command']['findAndModify'],
+                            ]
+                        )
                         op = 'findAndModify'
                         query = query['command'].get('query')
                     else:
@@ -50,6 +63,6 @@ class custom_query_counter(query_counter):
                     query = query.get('query')
                 print('{} [{}] {}'.format(ns, op, query))
                 print()
-            print('-'*80)
+            print('-' * 80)
         count = queries.count()
         return count

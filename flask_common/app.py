@@ -1,5 +1,6 @@
 from flask import Flask
 
+
 class Application(Flask):
     def __init__(self, name, *args, **kwargs):
         config = kwargs.pop('config', None)

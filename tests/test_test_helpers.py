@@ -1,5 +1,8 @@
 from flask_common.test_helpers import (
-    Capture, DictCompare, RegexSetCompare, SetCompare
+    Capture,
+    DictCompare,
+    RegexSetCompare,
+    SetCompare,
 )
 
 

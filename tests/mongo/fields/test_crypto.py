@@ -14,6 +14,7 @@ class EncryptedStringFieldTestCase(unittest.TestCase):
     def test_encrypted_field(self):
         class Secret(Document):
             password = EncryptedStringField(aes_generate_key())
+
         Secret.drop_collection()
 
         col = connection._get_db().secret
@@ -62,7 +63,10 @@ class EncryptedStringFieldTestCase(unittest.TestCase):
 
         # Test passwords of various lengths
         for pw_len in range(1, 50):
-            pw = ''.join(random.choice(string.ascii_letters + string.digits) for x in range(pw_len))
+            pw = ''.join(
+                random.choice(string.ascii_letters + string.digits)
+                for x in range(pw_len)
+            )
             s = Secret(password=pw)
             s.save()
             s.reload()

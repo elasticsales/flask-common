@@ -19,6 +19,7 @@ from email.utils import formatdate
 from flask import current_app, request, Response
 from functools import wraps
 from logging.handlers import SMTPHandler
+
 try:
     import mongoengine
 except ImportError:
@@ -28,7 +29,7 @@ from smtplib import SMTPDataError
 from socket import gethostname
 
 
-from ..enum import Enum # deprecated
+from ..enum import Enum  # deprecated
 
 
 def returns_xml(f):
@@ -36,7 +37,9 @@ def returns_xml(f):
     def decorated_function(*args, **kwargs):
         r = f(*args, **kwargs)
         return Response(r, content_type='text/xml; charset=utf-8')
+
     return decorated_function
+
 
 def json_list_generator(results):
     """Given a generator of individual JSON results, generate a JSON array"""
@@ -61,7 +64,12 @@ class DetailedSMTPHandler(SMTPHandler):
         ei = record.exc_info
         if ei:
             error = '(%s) %s' % (ei[0].__name__, ei[1])
-        return "[%s] %s %s on %s" % (self.app_name, request.path, error, gethostname())
+        return "[%s] %s %s on %s" % (
+            self.app_name,
+            request.path,
+            error,
+            gethostname(),
+        )
 
     def emit(self, record):
         """
@@ -75,11 +83,21 @@ class DetailedSMTPHandler(SMTPHandler):
                 port = smtplib.SMTP_PORT
             smtp = smtplib.SMTP(self.mailhost, port)
             msg = self.format(record)
-            msg = "From: %s\nTo: %s\nSubject: %s\nDate: %s\n\n%s\n\nRequest.url: %s\n\nRequest.headers: %s\n\nRequest.args: %s\n\nRequest.form: %s\n\nRequest.data: %s\n" % (
-                            self.fromaddr,
-                            ",".join(self.toaddrs),
-                            self.getSubject(record),
-                            formatdate(), msg, request.url, request.headers, request.args, request.form, request.data)
+            msg = (
+                "From: %s\nTo: %s\nSubject: %s\nDate: %s\n\n%s\n\nRequest.url: %s\n\nRequest.headers: %s\n\nRequest.args: %s\n\nRequest.form: %s\n\nRequest.data: %s\n"
+                % (
+                    self.fromaddr,
+                    ",".join(self.toaddrs),
+                    self.getSubject(record),
+                    formatdate(),
+                    msg,
+                    request.url,
+                    request.headers,
+                    request.args,
+                    request.form,
+                    request.data,
+                )
+            )
             if self.username:
                 if self.secure is not None:
                     smtp.ehlo()
@@ -93,17 +111,21 @@ class DetailedSMTPHandler(SMTPHandler):
         except:
             self.handleError(record)
 
+
 def unicode_csv_reader(unicode_csv_data, dialect=csv.excel, **kwargs):
     # csv.py doesn't do Unicode; encode temporarily as UTF-8:
-    csv_reader = csv.reader(utf_8_encoder(unicode_csv_data),
-                            dialect=dialect, **kwargs)
+    csv_reader = csv.reader(
+        utf_8_encoder(unicode_csv_data), dialect=dialect, **kwargs
+    )
     for row in csv_reader:
         # decode UTF-8 back to Unicode, cell by cell:
         yield [unicode(cell, 'utf-8') for cell in row]
 
+
 def utf_8_encoder(unicode_csv_data):
     for line in unicode_csv_data:
         yield line.encode('utf-8')
+
 
 class CsvReader(object):
     """ Wrapper around csv reader that ignores non utf-8 chars and strips the
@@ -117,8 +139,12 @@ class CsvReader(object):
 
     def next(self):
         row = self.reader.next()
-        row = [el.decode('utf8', errors='ignore').replace('\"', '').strip() for el in row]
+        row = [
+            el.decode('utf8', errors='ignore').replace('\"', '').strip()
+            for el in row
+        ]
         return row
+
 
 class NamedCsvReader(CsvReader):
     def __init__(self, *args, **kwargs):
@@ -129,12 +155,14 @@ class NamedCsvReader(CsvReader):
         row = super(NamedCsvReader, self).next()
         return dict(zip(self.headers, row))
 
+
 class CsvWriter:
     """
     A CSV writer which will write rows to CSV file "f",
     which is encoded in the given encoding.
     From http://docs.python.org/2/library/csv.html
     """
+
     def __init__(self, f, dialect=csv.excel, encoding="utf-8", **kwds):
         # Redirect output to a queue
         self.queue = io.StringIO()
@@ -143,7 +171,9 @@ class CsvWriter:
         self.encoder = codecs.getincrementalencoder(encoding)()
 
     def writerow(self, row):
-        self.writer.writerow([s.encode("utf-8") if isinstance(s, basestring) else s for s in row])
+        self.writer.writerow(
+            [s.encode("utf-8") if isinstance(s, basestring) else s for s in row]
+        )
         # Fetch UTF-8 output from the queue ...
         data = self.queue.getvalue()
         data = data.decode("utf-8")
@@ -158,10 +188,11 @@ class CsvWriter:
         for row in rows:
             self.writerow(row)
 
+
 def smart_unicode(s, encoding='utf-8', errors='strict'):
     if isinstance(s, unicode):
         return s
-    if not isinstance(s, basestring,):
+    if not isinstance(s, basestring):
         if hasattr(s, '__unicode__'):
             s = unicode(s)
         else:
@@ -169,6 +200,7 @@ def smart_unicode(s, encoding='utf-8', errors='strict'):
     elif not isinstance(s, unicode):
         s = s.decode(encoding, errors)
     return s
+
 
 def finite_float(value):
     """Convert any value to a finite float or throw a ValueError if it can't be done."""
@@ -195,10 +227,13 @@ def localtoday(tz_or_offset):
     offset in hours.
     """
     import pytz
+
     utc_now = datetime.datetime.utcnow()
     try:
-        local_now = tz_or_offset.normalize(pytz.utc.localize(utc_now).astimezone(tz_or_offset))
-    except AttributeError: # tz has no attribute normalize, assume numeric offset
+        local_now = tz_or_offset.normalize(
+            pytz.utc.localize(utc_now).astimezone(tz_or_offset)
+        )
+    except AttributeError:  # tz has no attribute normalize, assume numeric offset
         local_now = utc_now + datetime.timedelta(hours=tz_or_offset)
     local_today = datetime.date(*local_now.timetuple()[:3])
     return local_today
@@ -276,7 +311,9 @@ def _gen_tz_info_dict():
             tzd[tz_code] = tz_offset
     return tzd
 
+
 _tz_info_dict = _gen_tz_info_dict()
+
 
 def parse_date_tz(date):
     """
@@ -284,6 +321,7 @@ def parse_date_tz(date):
     aware or unaware datetime is returned on success, otherwise None.
     """
     import dateutil.parser
+
     try:
         return dateutil.parser.parse(date, tzinfos=_tz_info_dict)
     except (AttributeError, ValueError):
@@ -292,6 +330,7 @@ def parse_date_tz(date):
 
 def mail_admins(subject, body, recipients=None):
     from flask_mail import Message
+
     if recipients is None:
         recipients = current_app.config['ADMINS']
     if not current_app.testing:
@@ -301,12 +340,15 @@ def mail_admins(subject, body, recipients=None):
             print()
             print(body)
         else:
-            current_app.mail.send(Message(
-                subject,
-                sender=current_app.config['SERVER_EMAIL'],
-                recipients=recipients,
-                body=body,
-            ))
+            current_app.mail.send(
+                Message(
+                    subject,
+                    sender=current_app.config['SERVER_EMAIL'],
+                    recipients=recipients,
+                    body=body,
+                )
+            )
+
 
 def format_locals(exc_info):
     tb = exc_info[2]
@@ -321,9 +363,11 @@ def format_locals(exc_info):
     message += 'Locals by frame, innermost last:\n'
 
     for frame in stack:
-        message += '\nFrame %s in %s at line %s\n' % (frame.f_code.co_name,
-                                                      frame.f_code.co_filename,
-                                                      frame.f_lineno)
+        message += '\nFrame %s in %s at line %s\n' % (
+            frame.f_code.co_name,
+            frame.f_code.co_filename,
+            frame.f_lineno,
+        )
         for key, value in frame.f_locals.items():
             message += "\t%16s = " % key
             # We have to be careful not to cause a new error in our error
@@ -336,13 +380,22 @@ def format_locals(exc_info):
 
     return force_unicode(message)
 
-def mail_exception(extra_subject=None, context=None, vars=True, subject=None, recipients=None):
+
+def mail_exception(
+    extra_subject=None, context=None, vars=True, subject=None, recipients=None
+):
     from flask_mail import Message
 
     exc_info = sys.exc_info()
 
     if not subject:
-        subject = "[%s] %s%s %s on %s" % (request.host, extra_subject and '%s: ' % extra_subject or '', request.path, exc_info[1].__class__.__name__, gethostname())
+        subject = "[%s] %s%s %s on %s" % (
+            request.host,
+            extra_subject and '%s: ' % extra_subject or '',
+            request.path,
+            exc_info[1].__class__.__name__,
+            gethostname(),
+        )
 
     message_context = ''
     message_vars = ''
@@ -350,7 +403,9 @@ def mail_exception(extra_subject=None, context=None, vars=True, subject=None, re
     if context:
         message_context += 'Context:\n\n'
         try:
-            message_context += '\n'.join(['%s: %s' % (k, context[k]) for k in sorted(context.keys())])
+            message_context += '\n'.join(
+                ['%s: %s' % (k, context[k]) for k in sorted(context.keys())]
+            )
         except:
             message_context += 'Error reporting context.'
         message_context += '\n\n\n\n'
@@ -372,13 +427,25 @@ def mail_exception(extra_subject=None, context=None, vars=True, subject=None, re
             print()
             print(message)
         else:
-            msg = Message(subject, sender=current_app.config['SERVER_EMAIL'], recipients=recipients)
+            msg = Message(
+                subject,
+                sender=current_app.config['SERVER_EMAIL'],
+                recipients=recipients,
+            )
             msg.body = message
             try:
                 current_app.mail.send(msg)
             except SMTPDataError as e:
                 # Message too large? Exclude variable info.
-                message = ''.join([message_context, 'Not including variable info because we received an SMTP error:\n', repr(e), '\n\n\n\n', message_tb])
+                message = ''.join(
+                    [
+                        message_context,
+                        'Not including variable info because we received an SMTP error:\n',
+                        repr(e),
+                        '\n\n\n\n',
+                        message_tb,
+                    ]
+                )
                 msg.body = message
                 current_app.mail.send(msg)
 
@@ -394,8 +461,10 @@ def force_unicode(s):
         # most common encoding, conersion shouldn't fail
         return s.decode('latin1')
 
+
 def slugify(text, separator='_'):
     import unidecode
+
     if isinstance(text, unicode):
         text = unidecode.unidecode(text)
     text = text.lower().strip()
@@ -415,8 +484,10 @@ def apply_recursively(obj, f):
     else:
         return f(obj)
 
+
 class Timeout(Exception):
     pass
+
 
 class Timer(object):
     """
@@ -445,8 +516,10 @@ class Timer(object):
 
     def __exit__(self, *args):
         self.end = datetime.datetime.utcnow()
-        delta = (self.end - self.start)
-        self.interval = delta.days * 86400 + delta.seconds + delta.microseconds / 1000000.
+        delta = self.end - self.start
+        self.interval = (
+            delta.days * 86400 + delta.seconds + delta.microseconds / 1000000.0
+        )
         if self.timeout:
             signal.alarm(0)
             signal.signal(signal.SIGALRM, signal.SIG_IGN)
@@ -464,6 +537,7 @@ class ThreadedTimer(object):
 
     def _timeout_handler(self):
         import thread
+
         thread.interrupt_main()
 
     def __enter__(self):
@@ -477,8 +551,10 @@ class ThreadedTimer(object):
         if self.timeout:
             self._timer.cancel()
         self.end = datetime.datetime.utcnow()
-        delta = (self.end - self.start)
-        self.interval = delta.days * 86400 + delta.seconds + delta.microseconds / 1000000.
+        delta = self.end - self.start
+        self.interval = (
+            delta.days * 86400 + delta.seconds + delta.microseconds / 1000000.0
+        )
 
 
 def uniqify(seq, key=lambda i: i):
@@ -518,8 +594,10 @@ def uniqify(seq, key=lambda i: i):
 
 ### NORMALIZATION UTILS ###
 
+
 class FileFormatException(Exception):
     pass
+
 
 class Reader(object):
     """
@@ -563,7 +641,10 @@ class Reader(object):
 
         s = io.StringIO(line)
         # http://stackoverflow.com/questions/6879596/why-is-the-python-csv-reader-ignoring-double-quoted-fields
-        seq = [x.strip() for x in unicode_csv_reader(s, skipinitialspace=True).next()]
+        seq = [
+            x.strip()
+            for x in unicode_csv_reader(s, skipinitialspace=True).next()
+        ]
         if not seq:
             raise FileFormatException("Line does not contain any valid data.")
         if one_to_many:
@@ -578,6 +659,7 @@ class Reader(object):
     def next(self, one_to_many=True):
         return Reader.split(self.reader.next(), one_to_many=one_to_many)
 
+
 class Normalization(object):
     """ list of strings => normalized form """
 
@@ -588,15 +670,34 @@ class Normalization(object):
     def merge(self, normalization):
         self.tokens = list(set(self.tokens) | set(normalization.tokens))
 
+
 class NormalizationReader(Reader):
     """ keys => value """
 
     def next(self):
-        return Normalization(*super(NormalizationReader, self).next(one_to_many=False))
+        return Normalization(
+            *super(NormalizationReader, self).next(one_to_many=False)
+        )
+
 
 def build_normalization_map(filename, case_sensitive=False):
     normalizations = NormalizationReader(filename)
-    return dict(list(itertools.chain.from_iterable([[(token if case_sensitive else token.lower(), normalization.normalized_form) for token in normalization.tokens] for normalization in normalizations])))
+    return dict(
+        list(
+            itertools.chain.from_iterable(
+                [
+                    [
+                        (
+                            token if case_sensitive else token.lower(),
+                            normalization.normalized_form,
+                        )
+                        for token in normalization.tokens
+                    ]
+                    for normalization in normalizations
+                ]
+            )
+        )
+    )
 
 
 def truncate(text, size):
@@ -610,9 +711,10 @@ def truncate(text, size):
      'I can haz cheeseburgers'
     """
     if text and text[size:].find(' ') != -1:
-        return text[:size+text[size:].find(' ')]
+        return text[: size + text[size:].find(' ')]
     else:
         return text
+
 
 def combine(*lists):
     """
@@ -627,7 +729,11 @@ def combine(*lists):
     if len(lists) == 1:
         return lists[0]
     else:
-        return ['_'.join([s for s in p if s]) for p in itertools.product(lists[0], combine(*lists[1:]))]
+        return [
+            '_'.join([s for s in p if s])
+            for p in itertools.product(lists[0], combine(*lists[1:]))
+        ]
+
 
 def retry(func=None, exc=Exception, tries=1, wait=0):
     """
@@ -648,6 +754,7 @@ def retry(func=None, exc=Exception, tries=1, wait=0):
             # ...
         unreliable_function('boy')
     """
+
     def _retry(func):
         tries_left = tries
         while True:
@@ -663,16 +770,19 @@ def retry(func=None, exc=Exception, tries=1, wait=0):
         # Being used as a decorator generator
         def retry_decorator(func):
             return lambda *args, **kwargs: _retry(lambda: func(*args, **kwargs))
+
         return retry_decorator
     else:
         # Being used directly
         return _retry(func)
+
 
 class lazylist(object):
     """
     An object that can be iterated like a list, where the data is only loaded
     from the given function at the first iteration.
     """
+
     def __init__(self, f):
         self.f = f
         self.data = None

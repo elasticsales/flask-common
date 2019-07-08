@@ -8,6 +8,7 @@ workflows:
       - test-3.4
       - test-3.5
       - test-3.6
+      - black
 
 defaults: &defaults
   working_directory: ~/code
@@ -40,3 +41,15 @@ jobs:
     <<: *defaults
     docker:
     - image: circleci/python:3.6
+  black:
+    docker:
+    - image: circleci/python:3.6
+    working_directory: ~/code
+    steps:
+    - checkout
+    - run:
+        name: Install dependencies
+        command: sudo -E pip install black
+    - run:
+        name: Test
+        command: black --check .

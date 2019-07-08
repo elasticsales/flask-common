@@ -1,5 +1,32 @@
 from flask import current_app
-from mongoengine import QuerySet
+from mongoengine import Q, QuerySet
+
+
+class NotDeletedQuerySet(QuerySet):
+    """QuerySet that doesn't return soft-deleted documents by default."""
+
+    def __call__(
+        self,
+        q_obj=None,
+        class_check=True,
+        slave_okay=False,
+        read_preference=None,
+        **query
+    ):
+        # We don't use __ne=True here, because $ne isn't a selective query and
+        # doesn't utilize an index in the most efficient manner. See
+        # http://docs.mongodb.org/manual/faq/indexes/#using-ne-and-nin-in-a-query-is-slow-why.
+        extra_q_obj = Q(is_deleted=False)
+        q_obj = q_obj & extra_q_obj if q_obj else extra_q_obj
+        return super(NotDeletedQuerySet, self).__call__(
+            q_obj, class_check, slave_okay, read_preference, **query
+        )
+
+    def count(self, *args, **kwargs):
+        # we need this hack for doc.objects.count() to exclude deleted objects
+        if not getattr(self, '_not_deleted_query_applied', False):
+            self = self.all()
+        return super(NotDeletedQuerySet, self).count(*args, **kwargs)
 
 
 class ForbiddenQueryException(Exception):
@@ -28,6 +55,7 @@ class ForbiddenQueriesQuerySet(QuerySet):
 
     You can mark *any* queryset as safe with `mark_as_safe`.
     """
+
     forbidden_queries = None  # override this in a subclass
 
     _marked_as_safe = False
@@ -45,9 +73,9 @@ class ForbiddenQueriesQuerySet(QuerySet):
 
         query_shape = self._get_query_shape(self._query)
         for forbidden in self.forbidden_queries:
-            if (
-                query_shape == forbidden['query_shape'] and
-                (not forbidden.get('orderings') or self._ordering in forbidden['orderings'])
+            if query_shape == forbidden['query_shape'] and (
+                not forbidden.get('orderings')
+                or self._ordering in forbidden['orderings']
             ):
 
                 # determine the real limit based on objects.limit or objects[idx_key]
@@ -58,11 +86,12 @@ class ForbiddenQueriesQuerySet(QuerySet):
                     else:
                         limit = idx_key
 
-                if limit is None or limit > forbidden.get('max_allowed_limit', 0):
+                if limit is None or limit > forbidden.get(
+                    'max_allowed_limit', 0
+                ):
                     raise ForbiddenQueryException(
-                        'Forbidden query used! Query: %s, Ordering: %s, Limit: %s' % (
-                            self._query, self._ordering, limit
-                        )
+                        'Forbidden query used! Query: %s, Ordering: %s, Limit: %s'
+                        % (self._query, self._ordering, limit)
                     )
 
     def next(self):

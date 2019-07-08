@@ -1,5 +1,5 @@
-from mongoengine.fields import StringField
 import pytz
+from mongoengine.fields import StringField
 
 
 class TimezoneField(StringField):

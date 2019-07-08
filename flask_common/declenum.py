@@ -1,6 +1,7 @@
 from sqlalchemy.types import SchemaType, TypeDecorator, Enum
 import re
 
+
 class DeclEnumType(SchemaType, TypeDecorator):
     """
     DeclEnumType supports object instantiation in two different ways:
@@ -24,16 +25,16 @@ class DeclEnumType(SchemaType, TypeDecorator):
         self.enum_name = enum_name
 
         if enum:
-            self.enum_values=enum.values()
-            self.enum_name=enum.__name__
+            self.enum_values = enum.values()
+            self.enum_name = enum.__name__
 
         self.impl = Enum(
-                        *self.enum_values,
-                        name="ck%s" % re.sub(
-                                    '([A-Z])',
-                                    lambda m: "_" + m.group(1).lower(),
-                                    self.enum_name)
-                    )
+            *self.enum_values,
+            name="ck%s"
+            % re.sub(
+                '([A-Z])', lambda m: "_" + m.group(1).lower(), self.enum_name
+            )
+        )
 
     def create(self, bind=None, checkfirst=False):
         """Issue CREATE ddl for this type, if applicable."""
@@ -49,8 +50,9 @@ class DeclEnumType(SchemaType, TypeDecorator):
         if self.enum:
             return DeclEnumType(self.enum)
         else:
-            return DeclEnumType(enum_name=self.enum_name, enum_values=self.enum_values)
-
+            return DeclEnumType(
+                enum_name=self.enum_name, enum_values=self.enum_values
+            )
 
     def process_bind_param(self, value, dialect):
         if value is None:
@@ -83,8 +85,10 @@ class EnumSymbol(object):
     def __repr__(self):
         return "<%s>" % self.name
 
+
 class EnumMeta(type):
     """Generate new DeclEnum classes."""
+
     def __init__(cls, classname, bases, dict_):
         cls._reg = reg = cls._reg.copy()
         for k, v in dict_.items():
@@ -95,6 +99,7 @@ class EnumMeta(type):
 
     def __iter__(cls):
         return iter(cls._reg.values())
+
 
 class DeclEnum(object):
     """
@@ -132,10 +137,7 @@ class DeclEnum(object):
         try:
             return cls._reg[value]
         except KeyError:
-            raise ValueError(
-                    "Invalid value for %r: %r" %
-                    (cls.__name__, value)
-                )
+            raise ValueError("Invalid value for %r: %r" % (cls.__name__, value))
 
     @classmethod
     def values(cls):
