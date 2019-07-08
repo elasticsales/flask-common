@@ -233,7 +233,7 @@ def fetch_related(
         for id_group in grouper(batch_size, list(fetch_opts['ids'])):
             qs = document_class.objects.filter(
                 pk__in=id_group, **cls_filters
-            ).clear_initial_query()
+            ).clear_cls_query()
 
             # only fetch the requested fields
             if fetch_opts['fields_to_fetch']:
