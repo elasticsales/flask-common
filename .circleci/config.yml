@@ -8,7 +8,8 @@ workflows:
       - test-3.4
       - test-3.5
       - test-3.6
-      - black
+      - black 
+      - lint
 
 defaults: &defaults
   working_directory: ~/code
@@ -53,3 +54,18 @@ jobs:
     - run:
         name: Test
         command: black --check .
+  lint:
+    docker:
+    - image: circleci/python:3.6
+    working_directory: ~/code
+    steps:
+    - checkout
+    - run:
+        name: Iinstall dependencies
+        command: sudo -E pip install -r requirements_lint.txt
+    - run:
+        name: Test
+        command: |
+          flake8 --ignore N801,N802,F821,E203,E501,W503 --select C,E,F,W,B,B950
+
+
