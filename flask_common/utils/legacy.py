@@ -105,7 +105,7 @@ class DetailedSMTPHandler(SMTPHandler):
             smtp.quit()
         except (KeyboardInterrupt, SystemExit):
             raise
-        except:
+        except Exception:
             self.handleError(record)
 
 
@@ -350,7 +350,7 @@ def format_locals(exc_info):
             # we don't want.
             try:
                 message += '%s\n' % repr(value)
-            except:
+            except Exception:
                 message += "<ERROR WHILE PRINTING VALUE>\n"
 
     return force_unicode(message)
@@ -498,7 +498,7 @@ def uniqify(seq, key=lambda i: i):
     return result
 
 
-### NORMALIZATION UTILS ###
+# NORMALIZATION UTILS #
 
 
 class FileFormatException(Exception):

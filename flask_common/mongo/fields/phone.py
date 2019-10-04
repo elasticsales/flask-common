@@ -20,15 +20,15 @@ class PhoneField(StringField):
         # valid numbers don't start with the same digit(s) as their country code so we strip them
         country_code = phonenumbers.country_code_for_region(region)
         if country_code and value.startswith(str(country_code)):
-            value = value[len(str(country_code)) :]
+            value = value[len(str(country_code)):]
 
         parsed = phonenumbers.parse(value, region)
 
         # strip empty extension
         if parsed.country_code == 1 and len(str(parsed.national_number)) > 10:
-            regex = re.compile('.+\s*e?xt?\.?\s*$')
+            regex = re.compile(r'.+\s*e?xt?\.?\s*$')
             if regex.match(value):
-                value = re.sub('\s*e?xt?\.?\s*$', '', value)
+                value = re.sub(r'\s*e?xt?\.?\s*$', '', value)
                 new_parsed = phonenumbers.parse(value, region)
                 if len(str(new_parsed)) >= 10:
                     parsed = new_parsed
@@ -76,7 +76,7 @@ class PhoneField(StringField):
         )
 
     @classmethod
-    def to_raw_phone(self, value, region=None):
+    def to_raw_phone(cls, value, region=None):
         if isinstance(value, basestring) and value != '':
             try:
                 number = value

@@ -8,5 +8,5 @@ def uuid_to_id(uuid_obj, prefix):
 
 
 def id_to_uuid(id_str):
-    uuid_bytes = zbase62.a2b(str(id_str[id_str.find('_') + 1 :]))
+    uuid_bytes = zbase62.a2b(str(id_str[id_str.find('_') + 1:]))
     return uuid.UUID(bytes=uuid_bytes)

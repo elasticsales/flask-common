@@ -127,8 +127,8 @@ class SoftDeleteDocument(Document):
             self.modify(set__is_deleted=self.is_deleted)
 
     @queryset_manager
-    def all_objects(doc_cls, queryset):
-        if not hasattr(doc_cls, '_all_objs_queryset'):
+    def all_objects(self, queryset):
+        if not hasattr(self, '_all_objs_queryset'):
             doc_cls._all_objs_queryset = QuerySet(
                 doc_cls, doc_cls._get_collection()
             )
