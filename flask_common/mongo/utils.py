@@ -1,9 +1,4 @@
-from mongoengine import (
-    ListField,
-    ReferenceField,
-    SafeReferenceField,
-    SafeReferenceListField,
-)
+from mongoengine import ListField, ReferenceField, SafeReferenceField
 
 from flask_common.utils import grouper
 
