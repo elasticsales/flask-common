@@ -1,4 +1,7 @@
-from flask_common.crypto import aes_encrypt, aes_decrypt, aes_generate_key
+import random
+import string
+
+from flask_common.crypto import aes_decrypt, aes_encrypt, aes_generate_key
 
 
 def test_new_decrypt_function_can_process_old_data():
@@ -26,6 +29,9 @@ def test_new_decrypt_function_can_process_old_data_with_v2_marker():
 
 
 def test_new_decrypt_function_can_process_new_data():
-    data = 'test'
     key = aes_generate_key()
-    assert aes_decrypt(key, aes_encrypt(key, data)) == data
+    char_choices = string.ascii_letters + string.digits
+
+    for length in range(1, 300):
+        data = ''.join(random.choice(char_choices) for x in range(length))
+        assert aes_decrypt(key, aes_encrypt(key, data)) == data
