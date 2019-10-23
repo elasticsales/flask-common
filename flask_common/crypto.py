@@ -39,7 +39,7 @@ def aes_generate_key():
 def aes_encrypt(key, data):
     assert len(key) == KEY_LENGTH, 'invalid key size'
     iv = rng(AES_BLOCK_SIZE)
-    return iv + aes_encrypt_iv(key, data, iv)
+    return V0_MARKER + iv + aes_encrypt_iv(key, data, iv)
 
 
 # Verify + decrypt data encrypted with IV
