@@ -9,7 +9,7 @@ from flask_common.crypto import (
 
 
 def test_with_versioned_v0_data():
-    data = 'test'
+    data = b'test'
 
     # These were generated using the old encrypt functions.
     # We make sure the new functions can still decypher the old
@@ -21,7 +21,7 @@ def test_with_versioned_v0_data():
 
 
 def test_with_versioned_v0_corrupted_data():
-    data = 'test'
+    data = b'test'
 
     # These were generated using the old encrypt functions.
     # We make sure the new functions can still decypher the old
@@ -34,13 +34,13 @@ def test_with_versioned_v0_corrupted_data():
 
 
 def test_with_versioned_v1_data():
-    data = 'test'
+    data = b'test'
     key = aes_generate_key()
     assert aes_decrypt(key, aes_encrypt(key, data)) == data
 
 
 def test_with_versioned_v1_corrupted_data():
-    data = 'test'
+    data = b'test'
     key = aes_generate_key()
     encrypted_data = aes_encrypt(key, data)[3:]  # Missing first 3 bytes
     with pytest.raises(AuthenticationError):

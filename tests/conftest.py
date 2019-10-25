@@ -5,6 +5,5 @@ if sys.version_info[0] > 2:
         'test_legacy.py',
         'test_declenum.py',
         'test_formfields.py',
-        'test_crypto.py',
         'mongo',
     ]

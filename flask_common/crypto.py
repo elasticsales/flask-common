@@ -59,10 +59,6 @@ encryption. The same key/iv combination must never be reused to encrypt
 different messages.
 """
 
-# TODO: Make these functions work on Python 3
-# Remove crypto-related tests from tests/conftest.py blacklist when
-# working on this.
-
 
 # Returns a new randomly generated AES key
 def aes_generate_key():
@@ -79,7 +75,10 @@ def aes_encrypt(key, data):
 # Verify + decrypt data encrypted with IV
 def aes_decrypt(key, data):
     assert len(key) == KEY_LENGTH, 'invalid key size'
-    extracted_version = data[0]
+
+    # In Python 3, if you extract a single byte from a bytestring,
+    # you'll get an int. That's why we extract it using a slice.
+    extracted_version = data[0:1]
     data = data[1:]
 
     # In version 0, we used IVs with wrong sizes. We need to take this
