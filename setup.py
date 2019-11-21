@@ -21,7 +21,7 @@ setup(
         'pytz',
         'flask',
         'mongoengine',
-        'pycrypto',
+        'cryptography',
         'padding',
         'pytest',
     ],
