@@ -41,6 +41,13 @@ class EncryptedStringField(BinaryField):
             value = value.encode('utf-8')
         return super(BinaryField, self).__set__(instance, value)
 
+    def __get__(self, instance, owner):
+        # Always return text type
+        value = super(BinaryField, self).__get__(instance, owner)
+        if isinstance(value, bin_type):
+            value = value.decode('utf-8')
+        return value
+
     def _encrypt(self, data):
         return Binary(aes_encrypt(self.key_list[0], data))
 
@@ -54,7 +61,10 @@ class EncryptedStringField(BinaryField):
         raise AuthenticationError('message authentication failed')
 
     def to_python(self, value):
+        v = value and self._decrypt(value).decode('utf-8') or None 
         return value and self._decrypt(value).decode('utf-8') or None
 
     def to_mongo(self, value):
-        return value and self._encrypt(value.encode('utf-8')) or None
+        if isinstance(value, txt_type):
+            value = value.encode('utf-8')
+        return value and self._encrypt(value) or None

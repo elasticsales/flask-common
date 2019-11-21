@@ -72,4 +72,4 @@ class EncryptedStringFieldTestCase(unittest.TestCase):
             s = Secret(password=pw)
             s.save()
             s.reload()
-            self.assertEqual(s.password.decode('utf-8'), pw)
+            self.assertEqual(s.password, pw)
