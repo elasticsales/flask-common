@@ -1,5 +1,14 @@
 from __future__ import print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import unicode_literals
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import next
+from builtins import zip
+from past.builtins import basestring
+from builtins import object
 from builtins import str
 
 import calendar
@@ -18,6 +27,7 @@ import time
 from email.utils import formatdate
 from flask import request, Response
 from functools import wraps
+from future.utils import PY3
 from logging.handlers import SMTPHandler
 
 try:
@@ -40,7 +50,7 @@ def returns_xml(f):
 def json_list_generator(results):
     """Given a generator of individual JSON results, generate a JSON array"""
     yield '['
-    this_val = results.next()
+    this_val = next(results)
     while True:
         next_val = next(results, None)
         yield this_val + ',' if next_val else this_val
@@ -115,12 +125,18 @@ def unicode_csv_reader(unicode_csv_data, dialect=csv.excel, **kwargs):
     )
     for row in csv_reader:
         # decode UTF-8 back to Unicode, cell by cell:
-        yield [str(cell, 'utf-8') for cell in row]
+        if PY3:
+            yield row
+        else:
+            yield [str(cell, 'utf-8') for cell in row]
 
 
 def utf_8_encoder(unicode_csv_data):
     for line in unicode_csv_data:
-        yield line.encode('utf-8')
+        if PY3:
+            yield line
+        else:
+            yield line.encode('utf-8')
 
 
 class CsvReader(object):
@@ -133,8 +149,8 @@ class CsvReader(object):
     def __iter__(self):
         return self
 
-    def next(self):
-        row = self.reader.next()
+    def __next__(self):
+        row = next(self.reader)
         row = [
             el.decode('utf8', errors='ignore').replace('\"', '').strip()
             for el in row
@@ -145,14 +161,14 @@ class CsvReader(object):
 class NamedCsvReader(CsvReader):
     def __init__(self, *args, **kwargs):
         super(NamedCsvReader, self).__init__(*args, **kwargs)
-        self.headers = super(NamedCsvReader, self).next()
+        self.headers = next(super(NamedCsvReader, self))
 
-    def next(self):
-        row = super(NamedCsvReader, self).next()
+    def __next__(self):
+        row = next(super(NamedCsvReader, self))
         return dict(zip(self.headers, row))
 
 
-class CsvWriter:
+class CsvWriter(object):
     """
     A CSV writer which will write rows to CSV file "f",
     which is encoded in the given encoding.
@@ -189,14 +205,14 @@ class CsvWriter:
 
 
 def smart_unicode(s, encoding='utf-8', errors='strict'):
-    if isinstance(s, unicode):
+    if isinstance(s, str):
         return s
     if not isinstance(s, basestring):
         if hasattr(s, '__unicode__'):
-            s = unicode(s)
+            s = str(s)
         else:
-            s = unicode(str(s), encoding, errors)
-    elif not isinstance(s, unicode):
+            s = str(str(s), encoding, errors)
+    elif not isinstance(s, str):
         s = s.decode(encoding, errors)
     return s
 
@@ -361,7 +377,7 @@ def format_locals(exc_info):
 def force_unicode(s):
     """ Return a unicode object, no matter what the string is. """
 
-    if isinstance(s, unicode):
+    if isinstance(s, str):
         return s
     try:
         return s.decode('utf8')
@@ -386,7 +402,7 @@ def apply_recursively(obj, f):
     if isinstance(obj, (list, tuple)):
         return [apply_recursively(item, f) for item in obj]
     elif isinstance(obj, dict):
-        return {k: apply_recursively(v, f) for k, v in obj.items()}
+        return {k: apply_recursively(v, f) for k, v in list(obj.items())}
     elif obj is None:
         return None
     else:
@@ -444,9 +460,9 @@ class ThreadedTimer(object):
         self.on_timeout = on_timeout or self._timeout_handler
 
     def _timeout_handler(self):
-        import thread
+        import _thread
 
-        thread.interrupt_main()
+        _thread.interrupt_main()
 
     def __enter__(self):
         if self.timeout:
@@ -492,7 +508,7 @@ def uniqify(seq, key=lambda i: i):
         if mongoengine and isinstance(unique_key, mongoengine.EmbeddedDocument):
             unique_key = unique_key.to_dict()
         if isinstance(unique_key, dict):
-            unique_key = hash(frozenset(unique_key.items()))
+            unique_key = hash(frozenset(list(unique_key.items())))
 
         if unique_key not in seen:
             seen.add(unique_key)
@@ -551,7 +567,7 @@ class Reader(object):
         # http://stackoverflow.com/questions/6879596/why-is-the-python-csv-reader-ignoring-double-quoted-fields
         seq = [
             x.strip()
-            for x in unicode_csv_reader(s, skipinitialspace=True).next()
+            for x in next(unicode_csv_reader(s, skipinitialspace=True))
         ]
         if not seq:
             raise FileFormatException("Line does not contain any valid data.")
@@ -565,7 +581,7 @@ class Reader(object):
             return seq, key
 
     def next(self, one_to_many=True):
-        return Reader.split(self.reader.next(), one_to_many=one_to_many)
+        return Reader.split(next(self.reader), one_to_many=one_to_many)
 
 
 class Normalization(object):
@@ -582,7 +598,7 @@ class Normalization(object):
 class NormalizationReader(Reader):
     """ keys => value """
 
-    def next(self):
+    def __next__(self):
         return Normalization(
             *super(NormalizationReader, self).next(one_to_many=False)
         )
