@@ -4,12 +4,13 @@ from __future__ import division
 from __future__ import unicode_literals
 
 from future import standard_library
+
 standard_library.install_aliases()
 from builtins import next
 from builtins import zip
-from past.builtins import basestring
 from builtins import object
 from builtins import str
+from past.builtins import basestring
 
 import calendar
 import codecs
@@ -184,10 +185,7 @@ class CsvWriter(object):
 
     def writerow(self, row):
         self.writer.writerow(
-            [
-                s.encode("utf-8") if isinstance(s, (str, bytes)) else s
-                for s in row
-            ]
+            [s.encode("utf-8") if isinstance(s, basestring) else s for s in row]
         )
         # Fetch UTF-8 output from the queue ...
         data = self.queue.getvalue()
@@ -402,7 +400,7 @@ def apply_recursively(obj, f):
     if isinstance(obj, (list, tuple)):
         return [apply_recursively(item, f) for item in obj]
     elif isinstance(obj, dict):
-        return {k: apply_recursively(v, f) for k, v in list(obj.items())}
+        return {k: apply_recursively(v, f) for k, v in obj.items()}
     elif obj is None:
         return None
     else:
@@ -508,7 +506,7 @@ def uniqify(seq, key=lambda i: i):
         if mongoengine and isinstance(unique_key, mongoengine.EmbeddedDocument):
             unique_key = unique_key.to_dict()
         if isinstance(unique_key, dict):
-            unique_key = hash(frozenset(list(unique_key.items())))
+            unique_key = hash(frozenset(unique_key.items()))
 
         if unique_key not in seen:
             seen.add(unique_key)

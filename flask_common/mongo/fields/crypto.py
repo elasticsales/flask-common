@@ -1,6 +1,6 @@
 from bson import Binary
 from mongoengine.fields import BinaryField
-from mongoengine.python_support import bin_type, txt_type, PY3
+from mongoengine.python_support import bin_type, txt_type
 
 from flask_common.crypto import (
     KEY_LENGTH,
@@ -61,7 +61,6 @@ class EncryptedStringField(BinaryField):
         raise AuthenticationError('message authentication failed')
 
     def to_python(self, value):
-        v = value and self._decrypt(value).decode('utf-8') or None 
         return value and self._decrypt(value).decode('utf-8') or None
 
     def to_mongo(self, value):
