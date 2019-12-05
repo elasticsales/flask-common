@@ -1,10 +1,19 @@
+from __future__ import (
+    absolute_import,
+    division,
+    print_function,
+    unicode_literals,
+)
+
 import base64
 import json
 
 from flask import current_app
 from flask.testing import FlaskClient
+from six import PY3
 from werkzeug.datastructures import Headers
 
+from .utils import smart_unicode
 
 class Client(FlaskClient):
     """
@@ -24,7 +33,7 @@ class Client(FlaskClient):
         resp = super(Client, self).open(*args, **kwargs)
 
         try:
-            resp.json = lambda: json.loads(resp.data)
+            resp.json = lambda: json.loads(smart_unicode(resp.data))
         except ValueError:
             pass
 
@@ -42,14 +51,14 @@ class ApiClient(Client):
 
     def get_headers(self, api_key):
         api_key = api_key or self.api_key
-        return Headers(
-            [
-                (
-                    'Authorization',
-                    'Basic %s' % (base64.b64encode('%s:' % api_key)),
-                )
-            ]
-        )
+
+        # Make sure we're giving bytes to b64encode
+        auth_header = base64.b64encode(('%s:' % api_key).encode())
+
+        # PY3 gives us bytes bck, Need to decode from ASCII back to str
+        if PY3:
+            auth_header = auth_header.decode()
+        return Headers([('Authorization', 'Basic %s' % auth_header,)])
 
     def open(self, *args, **kwargs):
         # include api_key auth header in all api calls
