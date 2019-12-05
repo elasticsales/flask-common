@@ -1,4 +1,12 @@
+from __future__ import (
+    absolute_import,
+    division,
+    print_function,
+    unicode_literals,
+)
+
 from flask import current_app
+
 from mongoengine import Q, QuerySet
 
 
@@ -94,9 +102,9 @@ class ForbiddenQueriesQuerySet(QuerySet):
                         % (self._query, self._ordering, limit)
                     )
 
-    def next(self):
+    def __next__(self):
         self._check_for_forbidden_queries()
-        return super(ForbiddenQueriesQuerySet, self).next()
+        return super(ForbiddenQueriesQuerySet, self).__next__()
 
     def __getitem__(self, key):
         self._check_for_forbidden_queries(key)

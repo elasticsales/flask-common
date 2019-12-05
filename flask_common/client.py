@@ -15,6 +15,7 @@ from werkzeug.datastructures import Headers
 
 from .utils import smart_unicode
 
+
 class Client(FlaskClient):
     """
     Test client that supports JSON and uses the application's response class.

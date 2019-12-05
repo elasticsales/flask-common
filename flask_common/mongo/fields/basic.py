@@ -1,4 +1,11 @@
-from mongoengine.fields import StringField, EmailField
+from __future__ import (
+    absolute_import,
+    division,
+    print_function,
+    unicode_literals,
+)
+
+from mongoengine.fields import EmailField, StringField
 
 
 class TrimmedStringField(StringField):

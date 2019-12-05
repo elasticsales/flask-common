@@ -1,3 +1,10 @@
+from __future__ import (
+    absolute_import,
+    division,
+    print_function,
+    unicode_literals,
+)
+
 # Basic fields that don't have any non-MongoEngine dependencies
 from .basic import LowerEmailField, LowerStringField, TrimmedStringField
 

@@ -1,9 +1,14 @@
-import os
+from __future__ import (
+    absolute_import,
+    division,
+    print_function,
+    unicode_literals,
+)
+
 import datetime
+import os
+from builtins import str
 
-from past.builtins import basestring
-
-from zbase62 import zbase62
 from mongoengine import (
     BooleanField,
     DateTimeField,
@@ -14,6 +19,8 @@ from mongoengine import (
     ValidationError,
     queryset_manager,
 )
+from past.builtins import basestring
+from zbase62 import zbase62
 
 from .querysets import NotDeletedQuerySet
 
@@ -41,7 +48,7 @@ class RandomPKDocument(Document):
 
     @classmethod
     def _generate_pk(cls):
-        return u'%s_%s' % (cls.get_pk_prefix(), zbase62.b2a(os.urandom(32)))
+        return '%s_%s' % (cls.get_pk_prefix(), zbase62.b2a(os.urandom(32)))
 
     def save(self, *args, **kwargs):
         old_id = self.id
@@ -66,8 +73,8 @@ class RandomPKDocument(Document):
             # Use "startswith" instead of "in". Otherwise, if a free form
             # StringField had a unique constraint someone could inject that
             # string into the error message.
-            if unicode(err).startswith(
-                u'Tried to save duplicate unique keys (E11000 duplicate key error index: %s.%s.$_id_ '
+            if str(err).startswith(
+                'Tried to save duplicate unique keys (E11000 duplicate key error index: %s.%s.$_id_ '
                 % (self._get_db().name, self._get_collection_name())
             ):
                 return self.save(*args, **kwargs)
@@ -84,7 +91,7 @@ class DocumentBase(Document):
     meta = {'abstract': True}
 
     def _type(self):
-        return unicode(self.__class__.__name__)
+        return str(self.__class__.__name__)
 
     def save(self, *args, **kwargs):
         update_date = kwargs.pop('update_date', True)

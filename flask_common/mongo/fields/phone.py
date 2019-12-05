@@ -1,10 +1,17 @@
-from builtins import str
+from __future__ import (
+    absolute_import,
+    division,
+    print_function,
+    unicode_literals,
+)
 
 import re
-from past.builtins import basestring
+from builtins import str
 
 import phonenumbers
+
 from mongoengine.fields import StringField
+from past.builtins import basestring
 
 
 class PhoneField(StringField):
@@ -79,7 +86,7 @@ class PhoneField(StringField):
         )
 
     @classmethod
-    def to_raw_phone(self, value, region=None):
+    def to_raw_phone(cls, value, region=None):
         if isinstance(value, basestring) and value != '':
             try:
                 number = value
