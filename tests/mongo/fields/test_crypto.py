@@ -71,3 +71,9 @@ class EncryptedStringFieldTestCase(unittest.TestCase):
             s.save()
             s.reload()
             self.assertEqual(s.password, pw)
+
+        # Test with binary data as password
+        s.password = b'\xe3\x00\x12\xfe'
+        s.save()
+        s.reload()
+        self.assertEqual(s.password, b'\xe3\x00\x12\xfe')
