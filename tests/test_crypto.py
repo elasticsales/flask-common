@@ -11,15 +11,19 @@ from flask_common.crypto import (
 def test_with_v0_data():
     data = 'test'
     key = aes_generate_key()
-    assert aes_decrypt(key, aes_encrypt(key, data)) == data
+    encrypted_data = aes_encrypt(key, data)
+    assert encrypted_data[0] == b'\x00'
+    assert aes_decrypt(key, encrypted_data) == data
 
 
 def test_with_v0_corrupted_data():
     data = 'test'
     key = aes_generate_key()
-    encrypted_data = aes_encrypt(key, data)[3:]
+    encrypted_data = aes_encrypt(key, data)
+    assert encrypted_data[0] == b'\x00'
+    corrupted_encrypted_data = encrypted_data[3:]
     with pytest.raises(AuthenticationError):
-        aes_decrypt(key, encrypted_data)
+        aes_decrypt(key, corrupted_encrypted_data)
 
 
 def test_with_v1_data():
