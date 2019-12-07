@@ -6,7 +6,7 @@ Implemented with `pycrypto`.
 
 In this version, data is returned from `aes_encrypt` in the format:
 
-[VERSION 1 byte][IV 32 bytes][Encrypted data][HMAC 32 bytes]
+[VERSION 0 byte][IV 32 bytes][Encrypted data][HMAC 32 bytes]
 
 This format comes from a erroneous implementation that used an IV of
 32 bytes when AES expects IVs of 16 bytes, and the library used at the
