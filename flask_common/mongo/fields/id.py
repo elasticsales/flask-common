@@ -9,7 +9,6 @@ import uuid
 
 from flask_common.utils.id import id_to_uuid, uuid_to_id
 from mongoengine import UUIDField
-from past.builtins import basestring
 
 try:
     string_types = (basestring,)  # Python 2

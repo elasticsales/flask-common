@@ -132,7 +132,7 @@ def fetch_related(
 
     # Populate the field_info
     instances = get_instance_for_each_type(objs)
-    for field_name, sub_field_dict in list(field_dict.items()):
+    for field_name, sub_field_dict in field_dict.items():
 
         instance = [
             instance

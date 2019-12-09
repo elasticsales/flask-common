@@ -59,7 +59,7 @@ class ApiClient(Client):
         # PY3 gives us bytes bck, Need to decode from ASCII back to str
         if PY3:
             auth_header = auth_header.decode()
-        return Headers([('Authorization', 'Basic %s' % auth_header,)])
+        return Headers([('Authorization', 'Basic %s' % auth_header)])
 
     def open(self, *args, **kwargs):
         # include api_key auth header in all api calls
