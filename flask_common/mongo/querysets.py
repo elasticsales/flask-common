@@ -6,7 +6,6 @@ from __future__ import (
 )
 
 from flask import current_app
-from future.utils import implements_iterator
 
 from mongoengine import Q, QuerySet
 
@@ -42,7 +41,6 @@ class ForbiddenQueryException(Exception):
     """Exception raised by ForbiddenQueriesQuerySet"""
 
 
-@implements_iterator
 class ForbiddenQueriesQuerySet(QuerySet):
     """
     A queryset you can use to block some potentially dangerous queries
@@ -106,7 +104,10 @@ class ForbiddenQueriesQuerySet(QuerySet):
 
     def __next__(self):
         self._check_for_forbidden_queries()
-        return super(ForbiddenQueriesQuerySet, self).__next__()
+        try:
+            return super(ForbiddenQueriesQuerySet, self).__next__()
+        except AttributeError:
+            return super(ForbiddenQueriesQuerySet, self).next()
 
     def __getitem__(self, key):
         self._check_for_forbidden_queries(key)
