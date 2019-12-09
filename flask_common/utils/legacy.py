@@ -601,6 +601,10 @@ class NormalizationReader(Reader):
             *super(NormalizationReader, self).next(one_to_many=False)
         )
 
+    def next(self):
+        """Alias for PY2"""
+        return self.__next__()
+
 
 def build_normalization_map(filename, case_sensitive=False):
     normalizations = NormalizationReader(filename)
