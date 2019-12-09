@@ -50,6 +50,10 @@ V1_MARKER = b'\x01'
 rng = Random.new().read
 
 
+class EncryptionError(Exception):
+    pass
+
+
 class AuthenticationError(Exception):
     pass
 
@@ -87,9 +91,13 @@ def aes_decrypt(key, data):
     if extracted_version == V0_MARKER:
         iv = data[:V0_IV_SIZE]
         data = data[V0_IV_SIZE:]
-    else:
+    elif extracted_version == V1_MARKER:
         iv = data[:IV_SIZE]
         data = data[IV_SIZE:]
+    else:
+        raise EncryptionError(
+            'Found invalid version marker: {!r}'.format(extracted_version)
+        )
 
     return aes_decrypt_iv(key, data, iv, extracted_version)
 
