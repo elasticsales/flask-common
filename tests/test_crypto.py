@@ -29,7 +29,7 @@ def test_with_v0_corrupted_data():
 
     with pytest.raises(AuthenticationError) as excinfo:
         aes_decrypt(key, corrupted_encrypted_data)
-    assert excinfo.value.message == "message authentication failed"
+    assert str(excinfo.value) == "message authentication failed"
 
 
 def test_with_v1_data():
@@ -48,7 +48,7 @@ def test_with_v1_corrupted_data():
     corrupted_encrypted_data = encrypted_data[:-3]
     with pytest.raises(AuthenticationError) as excinfo:
         aes_decrypt(key, corrupted_encrypted_data)
-    assert excinfo.value.message == "message authentication failed"
+    assert str(excinfo.value) == "message authentication failed"
 
 
 def test_with_invalid_version():
@@ -56,4 +56,6 @@ def test_with_invalid_version():
     encrypted_data = b'\xa1M\xcdjP\xfd\xcc\xa1\xd7\xda\x11(Q \xbd\xe4w\n\x03C\x14!\x99N\xe8\xf0H\xbc\xf8\xf41\xa5\x10E\x0e\xbc\x04\x01\x85\x0b\xd5F\x1bq>\x12\x04\x11Y\x10\x8f\x0f\x06'
     with pytest.raises(EncryptionError) as excinfo:
         aes_decrypt(key, encrypted_data)
-    assert excinfo.value.message == "Found invalid version marker: '\\xa1'"
+    assert str(excinfo.value) == "Found invalid version marker: {!r}".format(
+        b'\xa1'
+    )
