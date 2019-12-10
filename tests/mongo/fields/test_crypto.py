@@ -20,20 +20,20 @@ class EncryptedStringFieldTestCase(unittest.TestCase):
         col = connection._get_db().secret
 
         # Test creating password
-        s = Secret.objects.create(password=u'hello')
-        self.assertEqual(s.password, u'hello')
+        s = Secret.objects.create(password='hello')
+        self.assertEqual(s.password, 'hello')
         s.reload()
-        self.assertEqual(s.password, u'hello')
+        self.assertEqual(s.password, 'hello')
 
         cipher = col.find({'_id': s.id})[0]['password']
         self.assertTrue('hello' not in cipher)
         self.assertTrue(len(cipher) > 16)
 
         # Test changing password
-        s.password = u'other'
+        s.password = 'other'
         s.save()
         s.reload()
-        self.assertEqual(s.password, u'other')
+        self.assertEqual(s.password, 'other')
 
         other_cipher = col.find({'_id': s.id})[0]['password']
         self.assertTrue('other' not in other_cipher)
@@ -41,10 +41,10 @@ class EncryptedStringFieldTestCase(unittest.TestCase):
         self.assertNotEqual(other_cipher, cipher)
 
         # Make sure password is encrypted differently if we resave.
-        s.password = u'hello'
+        s.password = 'hello'
         s.save()
         s.reload()
-        self.assertEqual(s.password, u'hello')
+        self.assertEqual(s.password, 'hello')
 
         new_cipher = col.find({'_id': s.id})[0]['password']
         self.assertTrue('hello' not in new_cipher)
