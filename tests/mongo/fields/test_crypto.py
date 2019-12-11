@@ -1,79 +1,42 @@
-import random
-import string
-import unittest
+# coding: utf-8
 
-from mongoengine import Document, connection
+import pytest
+from flask_common.crypto import AuthenticationError, aes_generate_key
+from flask_common.mongo.fields import (
+    EncryptedBinaryField,
+    EncryptedStringField,
+)
 
-from flask_common.crypto import aes_generate_key
-from flask_common.mongo.fields import EncryptedStringField
+
+def test_encrypted_binary_field_can_encrypt_and_decrypt():
+    token = EncryptedBinaryField(aes_generate_key())
+    assert token.to_python(token.to_mongo(b'\x00\x01')) == b'\x00\x01'
 
 
-class EncryptedStringFieldTestCase(unittest.TestCase):
-    # TODO pytest-ify and test the field instance directly without persistence.
+def test_encrypted_binary_field_can_rotate():
+    key_1 = aes_generate_key()
+    token = EncryptedBinaryField(key_1)
+    encrypted_data = token.to_mongo(b'\x00\x01')
 
-    def test_encrypted_field(self):
-        class Secret(Document):
-            password = EncryptedStringField(aes_generate_key())
+    key_2 = aes_generate_key()
+    token = EncryptedBinaryField([key_2, key_1])
+    assert token.to_python(encrypted_data) == b'\x00\x01'
 
-        Secret.drop_collection()
 
-        col = connection._get_db().secret
+def test_encrypted_binary_field_will_fail_on_corrupted_data():
+    key_1 = aes_generate_key()
+    token = EncryptedBinaryField(key_1)
+    corrupted_encrypted_data = token.to_mongo(b'\x00\x01')[:3]
+    with pytest.raises(AuthenticationError) as excinfo:
+        token.to_python(corrupted_encrypted_data)
+    assert str(excinfo.value) == 'message authentication failed'
 
-        # Test creating password
-        s = Secret.objects.create(password='hello')
-        self.assertEqual(s.password, 'hello')
-        s.reload()
-        self.assertEqual(s.password, 'hello')
 
-        cipher = col.find({'_id': s.id})[0]['password']
-        self.assertTrue('hello' not in cipher)
-        self.assertTrue(len(cipher) > 16)
+def test_encrypted_binary_field_with_none():
+    token = EncryptedBinaryField(aes_generate_key())
+    assert token.to_python(token.to_mongo(None)) is None
 
-        # Test changing password
-        s.password = 'other'
-        s.save()
-        s.reload()
-        self.assertEqual(s.password, 'other')
 
-        other_cipher = col.find({'_id': s.id})[0]['password']
-        self.assertTrue('other' not in other_cipher)
-        self.assertTrue(len(other_cipher) > 16)
-        self.assertNotEqual(other_cipher, cipher)
-
-        # Make sure password is encrypted differently if we resave.
-        s.password = 'hello'
-        s.save()
-        s.reload()
-        self.assertEqual(s.password, 'hello')
-
-        new_cipher = col.find({'_id': s.id})[0]['password']
-        self.assertTrue('hello' not in new_cipher)
-        self.assertTrue(len(new_cipher) > 16)
-        self.assertNotEqual(new_cipher, cipher)
-        self.assertNotEqual(other_cipher, cipher)
-
-        # Test empty password
-        s.password = None
-        s.save()
-        s.reload()
-        self.assertEqual(s.password, None)
-
-        raw = col.find({'_id': s.id})[0]
-        self.assertTrue('password' not in raw)
-
-        # Test passwords of various lengths
-        for pw_len in range(1, 50):
-            pw = ''.join(
-                random.choice(string.ascii_letters + string.digits)
-                for x in range(pw_len)
-            )
-            s = Secret(password=pw)
-            s.save()
-            s.reload()
-            self.assertEqual(s.password, pw)
-
-        # Test with binary data as password
-        s.password = b'\xe3\x00\x12\xfe'
-        s.save()
-        s.reload()
-        self.assertEqual(s.password, b'\xe3\x00\x12\xfe')
+def test_encrypted_string_field_works_with_unicode_data():
+    token = EncryptedStringField(aes_generate_key())
+    assert token.to_python(token.to_mongo(u'ãé')) == u'ãé'
