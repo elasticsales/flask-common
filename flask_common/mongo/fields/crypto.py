@@ -67,5 +67,5 @@ class EncryptedStringField(EncryptedBinaryField):
         return decrypted_value.decode('utf-8') if decrypted_value else None
 
     def to_mongo(self, value):
-        encoded_value = value.encode('utf-8')
+        encoded_value = value.encode('utf-8') if value else None
         return super(EncryptedStringField, self).to_mongo(encoded_value)
