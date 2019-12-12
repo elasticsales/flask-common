@@ -10,7 +10,7 @@ from .basic import LowerEmailField, LowerStringField, TrimmedStringField
 
 # Crypto fields
 try:
-    from .crypto import EncryptedStringField
+    from .crypto import EncryptedBinaryField, EncryptedStringField
 except ImportError:
     pass
 
@@ -36,6 +36,7 @@ __all__ = [
     'LowerEmailField',
     'LowerStringField',
     'TrimmedStringField',
+    'EncryptedBinaryField',
     'EncryptedStringField',
     'PhoneField',
     'TimezoneField',

@@ -6,7 +6,7 @@ Implemented with `pycrypto`.
 
 In this version, data is returned from `aes_encrypt` in the format:
 
-[VERSION 1 byte][IV 32 bytes][Encrypted data][HMAC 32 bytes]
+[VERSION 0 byte][IV 32 bytes][Encrypted data][HMAC 32 bytes]
 
 This format comes from a erroneous implementation that used an IV of
 32 bytes when AES expects IVs of 16 bytes, and the library used at the
@@ -23,6 +23,8 @@ In this version, data is returned from `aes_encrypt` in the format:
 This version came into existence to fix the wrong-sized IVs from
 version 0.
 
+Current code decrypts both versions, encrypts to version 1.
+
 In CTR mode, IV is also often called a Nonce (in `cryptography`'s
 public interface, for example).
 """
@@ -37,16 +39,20 @@ backend = default_backend()
 
 AES_KEY_SIZE = 32  # 256 bits
 HMAC_KEY_SIZE = 32  # 256 bits
+KEY_LENGTH = AES_KEY_SIZE + HMAC_KEY_SIZE
 
 V0_IV_SIZE = 32  # 256 bits, wrong size used in version 0
 IV_SIZE = 16  # 128 bits
 
 HMAC_DIGEST = hashlib.sha256
 HMAC_DIGEST_SIZE = hashlib.sha256().digest_size
-KEY_LENGTH = AES_KEY_SIZE + HMAC_KEY_SIZE
 
 V0_MARKER = b'\x00'
 V1_MARKER = b'\x01'
+
+
+class EncryptionError(Exception):
+    pass
 
 
 class AuthenticationError(Exception):
@@ -60,19 +66,19 @@ different messages.
 """
 
 
-# Returns a new randomly generated AES key
+# Returns a new randomly generated AES key.
 def aes_generate_key():
     return os.urandom(KEY_LENGTH)
 
 
-# Encrypt + sign using a random IV
+# Encrypt + sign using a random IV.
 def aes_encrypt(key, data):
     assert len(key) == KEY_LENGTH, 'invalid key size'
     iv = os.urandom(IV_SIZE)
     return V1_MARKER + iv + aes_encrypt_iv(key, data, iv)
 
 
-# Verify + decrypt data encrypted with IV
+# Verify + decrypt data encrypted with IV.
 def aes_decrypt(key, data):
     assert len(key) == KEY_LENGTH, 'invalid key size'
 
@@ -86,15 +92,19 @@ def aes_decrypt(key, data):
     if extracted_version == V0_MARKER:
         iv = data[:V0_IV_SIZE]
         data = data[V0_IV_SIZE:]
-    else:
+    elif extracted_version == V1_MARKER:
         iv = data[:IV_SIZE]
         data = data[IV_SIZE:]
+    else:
+        raise EncryptionError(
+            'Found invalid version marker: {!r}'.format(extracted_version)
+        )
 
     return aes_decrypt_iv(key, data, iv, extracted_version)
 
 
 # Encrypt + sign using provided IV.
-# Note: You should normally use aes_encrypt()
+# Note: You should normally use aes_encrypt().
 def aes_encrypt_iv(key, data, iv):
     aes_key = key[:AES_KEY_SIZE]
     hmac_key = key[AES_KEY_SIZE:]
@@ -106,14 +116,13 @@ def aes_encrypt_iv(key, data, iv):
     return cipher + sig
 
 
-# Verify + decrypt provided IV.
-# Note: You should normally use aes_decrypt()
+# Verify + decrypt using provided IV.
+# Note: You should normally use aes_decrypt().
 def aes_decrypt_iv(key, data, iv, extracted_version):
     aes_key = key[:AES_KEY_SIZE]
     hmac_key = key[AES_KEY_SIZE:]
-    sig_size = HMAC_DIGEST_SIZE
-    cipher = data[:-sig_size]
-    sig = data[-sig_size:]
+    cipher = data[:-HMAC_DIGEST_SIZE]
+    sig = data[-HMAC_DIGEST_SIZE:]
     if hmac.new(hmac_key, iv + cipher, HMAC_DIGEST).digest() != sig:
         raise AuthenticationError('message authentication failed')
 
