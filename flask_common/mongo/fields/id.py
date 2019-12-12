@@ -5,10 +5,10 @@ from __future__ import (
     unicode_literals,
 )
 
+from mongoengine import UUIDField
 import uuid
 
 from flask_common.utils.id import id_to_uuid, uuid_to_id
-from mongoengine import UUIDField
 
 try:
     string_types = (basestring,)  # Python 2
