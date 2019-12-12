@@ -48,14 +48,10 @@ class EncryptedBinaryField(BinaryField):
         raise AuthenticationError('message authentication failed')
 
     def to_python(self, value):
-        if not value:
-            return None
-        return self._decrypt(value)
+        return self._decrypt(value) if value else None
 
     def to_mongo(self, value):
-        if not value:
-            return None
-        return self._encrypt(value)
+        return self._encrypt(value) if value else None
 
 
 class EncryptedStringField(EncryptedBinaryField):
@@ -68,9 +64,7 @@ class EncryptedStringField(EncryptedBinaryField):
 
     def to_python(self, value):
         decrypted_value = super(EncryptedStringField, self).to_python(value)
-        if not decrypted_value:
-            return None
-        return decrypted_value.decode('utf-8')
+        return decrypted_value.decode('utf-8') if decrypted_value else None
 
     def to_mongo(self, value):
         encoded_value = value.encode('utf-8')
