@@ -64,7 +64,7 @@ def json_list_generator(results):
 class DetailedSMTPHandler(SMTPHandler):
     def __init__(self, app_name, *args, **kwargs):
         self.app_name = app_name
-        return super(DetailedSMTPHandler, self).__init__(*args, **kwargs)
+        super(DetailedSMTPHandler, self).__init__(*args, **kwargs)
 
     def getSubject(self, record):
         error = 'Error'

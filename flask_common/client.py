@@ -24,7 +24,7 @@ class Client(FlaskClient):
     def __init__(self, app, response_wrapper=None, **kwargs):
         if not response_wrapper:
             response_wrapper = app.response_class
-        return super(Client, self).__init__(app, response_wrapper, **kwargs)
+        super(Client, self).__init__(app, response_wrapper, **kwargs)
 
     def open(self, *args, **kwargs):
         if 'json' in kwargs and 'data' not in kwargs:
@@ -48,7 +48,7 @@ class ApiClient(Client):
 
     def __init__(self, app, api_key=None):
         self.api_key = api_key
-        return super(ApiClient, self).__init__(app, use_cookies=False)
+        super(ApiClient, self).__init__(app, use_cookies=False)
 
     def get_headers(self, api_key):
         api_key = api_key or self.api_key
