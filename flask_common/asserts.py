@@ -32,7 +32,7 @@ def response_error(response, code=None):
 
 
 def compare_req_resp(req_obj, resp_obj):
-    for k, v in req_obj.iteritems():
+    for k, v in req_obj.items():
         assert k in resp_obj.keys(), 'Key %r not in response (keys are %r)' % (
             k,
             resp_obj.keys(),
