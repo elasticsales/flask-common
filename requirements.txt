@@ -1,7 +1,7 @@
 future==0.17.1
 python-dateutil==2.5.0
 pytz==2015.7
-flask==0.10.1
+flask==1.0
 -e git+ssh://git@github.com/closeio/mongoengine.git@7f0c4b85e375f4eb756932bcb6414daf7b993247#egg=mongoengine
 -e git+ssh://git@github.com/closeio/flask-mongoengine.git@0c2cc30ec98154bb2eb4499efada65239050025d#egg=flask-mongoengine
 Flask-SQLAlchemy==2.1
