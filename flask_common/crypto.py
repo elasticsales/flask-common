@@ -84,8 +84,6 @@ def aes_decrypt(key, data):
     extracted_version = data[0:1]
     data = data[1:]
 
-    # In version 0, we used IVs with wrong sizes. We need to take this
-    # into account when separating encrypted data from their IVs.
     if extracted_version == V1_MARKER:
         iv = data[:IV_SIZE]
         data = data[IV_SIZE:]
