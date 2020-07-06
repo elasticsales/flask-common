@@ -313,8 +313,7 @@ def fetch_related(
                 val = getattr(obj, field_name, None)
                 if val and getattr(val, '_lazy', False):
                     rel_obj = pk_to_obj.get(val.pk)
-                    if rel_obj:
-                        setattr_unchanged(obj, field_name, rel_obj)
+                    setattr_unchanged(obj, field_name, rel_obj)
 
             elif isinstance(field, ListField):
                 if field_name not in obj._internal_data:
