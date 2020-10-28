@@ -8,7 +8,14 @@ def test_api_client_basic_auth():
     client = ApiClient(app, api_key='123456')
 
     headers = client.get_headers(client.api_key)
-    assert headers == Headers([('Authorization', 'Basic MTIzNDU2Og==',)])
+    assert headers == Headers(
+        [
+            (
+                'Authorization',
+                'Basic MTIzNDU2Og==',
+            )
+        ]
+    )
 
 
 def test_json():

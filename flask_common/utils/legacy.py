@@ -75,20 +75,17 @@ class DetailedSMTPHandler(SMTPHandler):
                 port = smtplib.SMTP_PORT
             smtp = smtplib.SMTP(self.mailhost, port)
             msg = self.format(record)
-            msg = (
-                "From: %s\nTo: %s\nSubject: %s\nDate: %s\n\n%s\n\nRequest.url: %s\n\nRequest.headers: %s\n\nRequest.args: %s\n\nRequest.form: %s\n\nRequest.data: %s\n"
-                % (
-                    self.fromaddr,
-                    ",".join(self.toaddrs),
-                    self.getSubject(record),
-                    formatdate(),
-                    msg,
-                    request.url,
-                    request.headers,
-                    request.args,
-                    request.form,
-                    request.data,
-                )
+            msg = "From: %s\nTo: %s\nSubject: %s\nDate: %s\n\n%s\n\nRequest.url: %s\n\nRequest.headers: %s\n\nRequest.args: %s\n\nRequest.form: %s\n\nRequest.data: %s\n" % (
+                self.fromaddr,
+                ",".join(self.toaddrs),
+                self.getSubject(record),
+                formatdate(),
+                msg,
+                request.url,
+                request.headers,
+                request.args,
+                request.form,
+                request.data,
             )
             if self.username:
                 if self.secure is not None:
@@ -119,8 +116,8 @@ def utf_8_encoder(unicode_csv_data):
 
 
 class CsvReader(object):
-    """ Wrapper around csv reader that ignores non utf-8 chars and strips the
-    record. """
+    """Wrapper around csv reader that ignores non utf-8 chars and strips the
+    record."""
 
     def __init__(self, file_name, delimiter=','):
         self.reader = csv.reader(open(file_name, 'rbU'), delimiter=delimiter)
@@ -231,8 +228,8 @@ def localtoday(tz_or_offset):
 
 
 def make_unaware(d):
-    """ Converts an unaware datetime in UTC or an aware datetime to an unaware
-    datetime in UTC. """
+    """Converts an unaware datetime in UTC or an aware datetime to an unaware
+    datetime in UTC."""
     import pytz
 
     # "A datetime object d is aware if d.tzinfo is not None and
