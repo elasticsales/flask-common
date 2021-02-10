@@ -5,7 +5,7 @@ flask>=1
 -e git+ssh://git@github.com/closeio/flask-mongoengine.git@0c2cc30ec98154bb2eb4499efada65239050025d#egg=flask-mongoengine
 Flask-SQLAlchemy==2.1
 phonenumbers==8.8.7
-cryptography==3.2.1
+cryptography==3.3.2
 padding==0.4
 Unidecode==0.4.19
 -e git+ssh://git@github.com/closeio/zbase62.git@e13d2c748ccdb0cafe6465961a0c6a4111ee219f#egg=zbase62
